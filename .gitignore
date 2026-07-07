@@ -1,0 +1,26 @@
+# Carpetas internas de agentes / IA
+.agents/
+.claude/
+.codex/
+.impeccable/
+.playwright-mcp/
+
+# Respaldos, prototipos y carpetas de pruebas
+Respaldos/
+Respaldo/
+prototipos/
+Dimensionation/
+Diccionario-StitchedGoogleMCP/
+stitchGoogle/
+stitch-hacia-AlstudioGoogle/
+stitch-hacia-AlstudioGoogle/**
+**/stitch-hacia-AlstudioGoogle/
+**/stitch-hacia-AlstudioGoogle/**
+z.com/
+
+# Archivos internos
+skills-lock.json
+
+# Sistema
+.DS_Store
+Thumbs.db
