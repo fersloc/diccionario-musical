@@ -5921,6 +5921,14 @@ body:not(.day-mode) .music-controls .btn.icon:hover
 .s64-title { font-size: 24px; font-weight: 700; color: var(--gold); letter-spacing: .08em; }
 .s64-sub { font-size: 10px; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; margin-top: 2px; }
 .s64-transport { display: flex; align-items: center; gap: 16px; padding: 12px 16px; background: var(--panel-2); border: 1px solid rgba(255,176,0,.2); margin-bottom: 16px; flex-wrap: wrap; }
+.s64-tab-queued { border-color: rgba(255,176,0,.8) !important; animation: s64QueuePulse .6s ease-in-out infinite alternate; }
+@keyframes s64QueuePulse { from { opacity:.5; } to { opacity:1; } }
+.s64-beat-led { width: 11px; height: 11px; border-radius: 50%; background: rgba(255,176,0,.06); border: 1px solid rgba(255,176,0,.3); flex-shrink: 0; transition: background .04s, box-shadow .04s; }
+.s64-rate-group { display: flex; align-items: center; gap: 3px; }
+.s64-rate-label { font: 700 7px 'IBM Plex Mono', monospace; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; margin-right: 4px; }
+.s64-rate-btn { background: none; border: 1px solid rgba(255,176,0,.18); color: rgba(255,176,0,.45); font: 700 9px 'IBM Plex Mono', monospace; padding: 4px 7px; cursor: pointer; transition: all .1s; white-space: nowrap; }
+.s64-rate-btn:hover { border-color: rgba(255,176,0,.5); color: var(--gold); }
+.s64-rate-btn.s64-active { background: rgba(255,176,0,.14); border-color: rgba(255,176,0,.7); color: var(--gold); }
 .s64-bpm-val { font-size: 36px; font-weight: 700; color: var(--gold); line-height: 1; font-family: 'IBM Plex Mono', monospace; }
 .s64-bpm-label { font-size: 8px; letter-spacing: .15em; color: var(--muted); text-transform: uppercase; }
 .s64-btn { background: none; border: 1px solid rgba(255,176,0,.3); color: rgba(255,176,0,.7); font-size: 16px; cursor: pointer; padding: 6px 10px; transition: all .1s; }
@@ -13610,7 +13618,9 @@ var seq64State = {
   multiSel: [],
   _phraseLen: 4,
   _phraseDir: 'up',
-  _isDraggingPhrase: false
+  _isDraggingPhrase: false,
+  stepRate: 4,
+  _queuedSEQ: null
 };
 
 /* ── Note helpers ── */
@@ -13723,7 +13733,7 @@ function s64PlayNote(midi, velocity, gatePct, bpm) {
   var ctx = ae.ctx;
   var out = ae.master || ctx.destination;
   var now = ctx.currentTime;
-  var stepDur = (60 / bpm) / 2;
+  var stepDur = (60 / bpm) / seq64State.stepRate;
   var noteDur = stepDur * (gatePct / 100);
   var freq = 440 * Math.pow(2, (midi - 69) / 12);
   // Velocity curve: exponential so soft notes feel soft, loud notes feel loud
@@ -13763,13 +13773,41 @@ function s64Tick() {
   var nowEl = document.querySelector('.s64-step[data-idx="' + idx + '"]');
   if (nowEl) nowEl.classList.add('s64-now');
 
+  /* beat LED */
+  var _led = document.getElementById('s64BeatLed');
+  if (_led) {
+    var _stepsPerBeat = state.stepRate;
+    var _isBeat = (tick % _stepsPerBeat === 0);
+    var _isOne  = (tick === 0);
+    if (_isBeat) {
+      _led.style.boxShadow = _isOne ? '0 0 8px 3px rgba(255,176,0,.85)' : '0 0 4px 1px rgba(255,176,0,.4)';
+      _led.style.background = _isOne ? '#ffb000' : 'rgba(255,176,0,.55)';
+      clearTimeout(_led._t);
+      _led._t = setTimeout(function() {
+        _led.style.background = 'rgba(255,176,0,.06)';
+        _led.style.boxShadow = 'none';
+      }, 70);
+    }
+  }
+
   var step = seq.steps[idx];
   if (step && step.active) {
     var vel = s64EffectiveVelocity(step);
     s64PlayNote(step.note, vel, seq.gateLength || 50, state.bpm);
   }
 
-  state.tick = (tick + 1) % (state.direction === 'pingpong' ? Math.max(1, len * 2 - 2) : len);
+  var _nextTick = (tick + 1) % (state.direction === 'pingpong' ? Math.max(1, len * 2 - 2) : len);
+  state.tick = _nextTick;
+  if (_nextTick === 0 && state._queuedSEQ !== null) {
+    state.activeSEQ = state._queuedSEQ;
+    state._queuedSEQ = null;
+    document.querySelectorAll('.s64-tab').forEach(function(t) {
+      var ti = parseInt(t.dataset.seq);
+      t.classList.toggle('s64-active', ti === state.activeSEQ);
+      t.classList.remove('s64-tab-queued');
+    });
+    document.querySelectorAll('.s64-seq-meta input, .s64-seq-meta span, .s64-seq-meta button').forEach(function(el) {});
+  }
   if (!state.looping && state.tick === 0) s64Stop();
 }
 
@@ -13779,7 +13817,7 @@ function s64Play() {
   var ae = (typeof audioEngine !== 'undefined') ? audioEngine : null;
   function _start() {
     seq64State.playing = true;
-    var ms = (60000 / seq64State.bpm) / 2;
+    var ms = (60000 / seq64State.bpm) / seq64State.stepRate;
     seq64State._timer = setInterval(s64Tick, ms);
     var pb = document.getElementById('s64PlayBtn');
     if (pb) pb.classList.add('s64-active');
@@ -13795,16 +13833,20 @@ function s64Stop() {
   seq64State.playing = false;
   if (seq64State._timer) { clearInterval(seq64State._timer); seq64State._timer = null; }
   seq64State.tick = 0;
+  seq64State._queuedSEQ = null;
   document.querySelectorAll('.s64-step').forEach(function(el) { el.classList.remove('s64-now'); });
+  document.querySelectorAll('.s64-tab').forEach(function(t) { t.classList.remove('s64-tab-queued'); });
   var pb = document.getElementById('s64PlayBtn');
   if (pb) pb.classList.remove('s64-active');
+  var led = document.getElementById('s64BeatLed');
+  if (led) { led.style.background = 'rgba(255,176,0,.06)'; led.style.boxShadow = 'none'; }
 }
 
 function s64SetBPM(val) {
   seq64State.bpm = Math.max(20, Math.min(300, val));
   var el = document.getElementById('s64BpmInput');
   if (el) el.value = seq64State.bpm;
-  if (seq64State.playing) { clearInterval(seq64State._timer); var ms = (60000 / seq64State.bpm) / 2; seq64State._timer = setInterval(s64Tick, ms); }
+  if (seq64State.playing) { clearInterval(seq64State._timer); var ms = (60000 / seq64State.bpm) / seq64State.stepRate; seq64State._timer = setInterval(s64Tick, ms); }
 }
 
 /* ── Biblioteca de ejemplos ── */
@@ -13904,7 +13946,9 @@ function renderSeq64() {
   html += '</div>';
 
   var s64WaveOpts = [{v:'sine',t:'Sine'},{v:'triangle',t:'Triangle'},{v:'sawtooth',t:'Sawtooth'},{v:'square',t:'Square'}];
+  var s64Rates = [{v:1,t:'1/4'},{v:2,t:'1/8'},{v:4,t:'1/16'},{v:8,t:'1/32'}];
   html += '<div class="s64-transport">';
+  html += '<div id="s64BeatLed" class="s64-beat-led" title="Beat 1"></div>';
   html += '<div style="display:flex;flex-direction:column;">';
   html += '<div class="s64-bpm-label">BPM</div>';
   html += '<input type="number" id="s64BpmInput" min="20" max="300" value="' + state.bpm + '" style="width:64px;background:none;border:none;border-bottom:1px solid rgba(255,176,0,.4);color:var(--gold);font:700 32px \'IBM Plex Mono\',monospace;padding:0;outline:none;text-align:left;">';
@@ -13912,6 +13956,12 @@ function renderSeq64() {
   html += '<button class="s64-btn" id="s64PlayBtn" title="Play">▶</button>';
   html += '<button class="s64-btn" id="s64StopBtn" title="Stop">■</button>';
   html += '<button class="s64-btn' + (state.looping ? ' s64-active' : '') + '" id="s64LoopBtn" title="Loop">↺</button>';
+  html += '<div class="s64-rate-group">';
+  html += '<span class="s64-rate-label">RATE</span>';
+  s64Rates.forEach(function(r) {
+    html += '<button class="s64-rate-btn' + (state.stepRate === r.v ? ' s64-active' : '') + '" data-s64rate="' + r.v + '">' + r.t + '</button>';
+  });
+  html += '</div>';
   html += '<select id="s64WaveSel" style="width:90px;background:var(--bg);border:1px solid rgba(255,176,0,.25);color:var(--gold);font:10px \'IBM Plex Mono\',monospace;padding:4px 5px;cursor:pointer;outline:none;flex-shrink:0;" title="Sonido">';
   s64WaveOpts.forEach(function(w) { html += '<option value="' + w.v + '"' + (state.waveform === w.v ? ' selected' : '') + '>' + w.t + '</option>'; });
   html += '</select>';
@@ -14301,7 +14351,6 @@ function s64ShowSeqSettings(btn, seqIdx) {
     renderSeq64();
   }
   function doClear() {
-    if (!confirm('Borrar todos los pasos de SEQ ' + (seqIdx + 1) + '?')) return;
     seq.steps.forEach(function(st) { st.active = false; });
     seq64State.selectedStep = null;
     s64ClosePopup();
@@ -14544,10 +14593,19 @@ function s64BindEvents() {
     tab.addEventListener('click', function() {
       s64ClosePopup();
       var idx = parseInt(this.dataset.seq);
-      state.activeSEQ = idx;
-      state.selectedStep = null;
-      state.tick = 0;
-      renderSeq64();
+      if (state.playing) {
+        if (idx === state.activeSEQ) return; /* ya está corriendo esta, no hacer nada */
+        /* encolar para el final del patrón actual */
+        state._queuedSEQ = idx;
+        document.querySelectorAll('.s64-tab').forEach(function(t) { t.classList.remove('s64-tab-queued'); });
+        this.classList.add('s64-tab-queued');
+      } else {
+        state.activeSEQ = idx;
+        state._queuedSEQ = null;
+        state.selectedStep = null;
+        state.tick = 0;
+        renderSeq64();
+      }
     });
   });
 
@@ -14571,7 +14629,6 @@ function s64BindEvents() {
 
   var clearBtn = document.getElementById('s64ClearBtn');
   if (clearBtn) clearBtn.addEventListener('click', function() {
-    if (!confirm('¿Limpiar la secuencia?')) return;
     state.seqs[state.activeSEQ].steps.forEach(function(s) { s.active = false; });
     state.selectedStep = null;
     renderSeq64();
@@ -14997,6 +15054,20 @@ function s64BindEvents() {
   if (testBtn) testBtn.addEventListener('click', s64ExportTestReport);
 
   /* Biblioteca accordion */
+  /* Step rate buttons */
+  document.querySelectorAll('[data-s64rate]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      seq64State.stepRate = parseInt(this.dataset.s64rate);
+      document.querySelectorAll('[data-s64rate]').forEach(function(b) { b.classList.remove('s64-active'); });
+      this.classList.add('s64-active');
+      if (seq64State.playing) {
+        clearInterval(seq64State._timer);
+        var ms = (60000 / seq64State.bpm) / seq64State.stepRate;
+        seq64State._timer = setInterval(s64Tick, ms);
+      }
+    });
+  });
+
   document.querySelectorAll('[data-bib-toggle]').forEach(function(hdr) {
     hdr.addEventListener('click', function() {
       var pack = this.closest('.s64-bib-pack');
