@@ -6004,6 +6004,35 @@ body:not(.day-mode) .music-controls .btn.icon:hover
   .s64-bpm-val { font-size: 26px; }
 }
 
+/* ── Sound Lab ────────────────────────────────── */
+#soundlab { padding: 0; }
+.sl-section { padding: clamp(12px,3vw,24px); }
+.sl-eng-btn { transition: all .1s; }
+.sl-eng-btn:hover { border-color: rgba(255,176,0,.5) !important; color: var(--gold) !important; }
+.sl-eng-btn.sl-active { background: rgba(255,176,0,.14) !important; border-color: rgba(255,176,0,.7) !important; color: var(--gold) !important; }
+.sl-knob-row { display: grid; grid-template-columns: repeat(auto-fill,minmax(130px,1fr)); gap: 12px 20px; }
+.sl-knob-label { font: 700 8px 'IBM Plex Mono',monospace; letter-spacing:.12em; color: var(--muted); text-transform: uppercase; }
+.sl-knob-val { font: 700 9px 'IBM Plex Mono',monospace; color: var(--gold); }
+.sl-range { width:100%; accent-color: var(--gold); cursor: pointer; }
+.sl-play-btn { background: rgba(255,176,0,.1); border: 1px solid rgba(255,176,0,.5); color: var(--gold); font: 700 13px 'IBM Plex Mono',monospace; padding: 12px 24px; cursor: pointer; letter-spacing:.08em; white-space: nowrap; transition: background .1s; }
+.sl-play-btn:hover { background: rgba(255,176,0,.18); }
+.sl-save-btn { background: rgba(255,176,0,.08); border: 1px solid rgba(255,176,0,.35); color: var(--gold); font: 700 10px 'IBM Plex Mono',monospace; padding: 8px 14px; cursor: pointer; letter-spacing:.1em; white-space: nowrap; transition: background .1s; }
+.sl-save-btn:hover { background: rgba(255,176,0,.16); }
+.sl-name-input { background: var(--bg); border: 1px solid rgba(255,176,0,.25); color: var(--ink); font: 11px 'IBM Plex Mono',monospace; padding: 8px 10px; outline: none; flex: 1; min-width: 140px; }
+.sl-name-input:focus { border-color: rgba(255,176,0,.5); }
+.sl-preset-card { border: 1px solid rgba(255,176,0,.15); background: rgba(255,176,0,.04); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.sl-preset-tag { font: 700 8px 'IBM Plex Mono',monospace; color: rgba(255,176,0,.45); }
+.sl-preset-name { font: 700 11px 'IBM Plex Mono',monospace; color: var(--ink); }
+.sl-preset-play { flex:1; background: none; border: 1px solid rgba(255,176,0,.25); color: rgba(255,176,0,.6); font: 700 8px 'IBM Plex Mono',monospace; padding: 4px; cursor: pointer; transition: all .1s; }
+.sl-preset-play:hover { background: rgba(255,176,0,.1); border-color: rgba(255,176,0,.5); color: var(--gold); }
+.sl-preset-load { flex:2; background: none; border: 1px solid rgba(255,176,0,.18); color: rgba(255,176,0,.45); font: 700 8px 'IBM Plex Mono',monospace; padding: 4px; cursor: pointer; transition: all .1s; }
+.sl-preset-load:hover { background: rgba(255,176,0,.08); color: var(--gold); }
+.sl-preset-del { background: none; border: none; color: rgba(255,100,100,.5); font: 700 10px 'IBM Plex Mono',monospace; cursor: pointer; padding: 0; line-height:1; transition: color .1s; }
+.sl-preset-del:hover { color: rgba(255,80,80,.9); }
+@media (max-width: 600px) {
+  .sl-knob-row { grid-template-columns: repeat(auto-fill,minmax(110px,1fr)); gap:10px 14px; }
+}
+
   </style>
 </head>
 <body>
@@ -6039,6 +6068,7 @@ body:not(.day-mode) .music-controls .btn.icon:hover
         <button class="btn" data-nav-view="ritmos2">Ritmo</button>
         <button class="btn" data-nav-view="conceptos">Conceptos</button>
         <button class="btn" data-nav-view="seq64">64 SEQ</button>
+        <button class="btn" data-nav-view="soundlab">Sound Lab</button>
       </nav>
       <button id="mobileMenuBtn" aria-label="Abrir menú" title="Menú"><span></span><span></span><span></span></button>
       <button id="themeToggleBtn" title="Modo día/noche" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--muted);opacity:.6;padding:4px 8px;font-family:inherit;transition:opacity .15s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6">☀</button>
@@ -6057,6 +6087,7 @@ body:not(.day-mode) .music-controls .btn.icon:hover
         <button class="btn" data-nav-view="ritmos2">Ritmo</button>
         <button class="btn" data-nav-view="conceptos">Conceptos</button>
         <button class="btn" data-nav-view="seq64">64 SEQ</button>
+        <button class="btn" data-nav-view="soundlab">Sound Lab</button>
       </nav>
     </aside>
 
@@ -6097,9 +6128,14 @@ body:not(.day-mode) .music-controls .btn.icon:hover
                 <span class="home-tile-body"><b>Ritmo</b><span>Secuenciador multi-pista con cadenas y acentos.</span></span>
                 <span class="home-tile-arrow">→</span>
               </button>
-              <button class="home-tile home-tile-last" data-nav-view="conceptos">
+              <button class="home-tile" data-nav-view="conceptos">
                 <span class="home-tile-num">06</span>
                 <span class="home-tile-body"><b>Conceptos</b><span>Escalas, acordes, progresiones, ritmo y términos musicales explicados.</span></span>
+                <span class="home-tile-arrow">→</span>
+              </button>
+              <button class="home-tile home-tile-accent home-tile-last" data-nav-view="soundlab">
+                <span class="home-tile-num">07</span>
+                <span class="home-tile-body"><b>Sound Lab</b><span>Sintetizador con 16 motores, presets y visualizador de onda.</span></span>
                 <span class="home-tile-arrow">→</span>
               </button>
             </div>
@@ -9766,6 +9802,8 @@ body:not(.day-mode) .music-controls .btn.icon:hover
         <div id="seq64Root"></div>
       </section>
 
+      <section class="view" id="soundlab"></section>
+
     </main>
     <footer class="app-footer">by fersloc rimiri, millonario de ideas</footer>
   </div>
@@ -9943,7 +9981,8 @@ body:not(.day-mode) .music-controls .btn.icon:hover
         currentChordIndex: -1,
         currentBeat: 0,
         referenceRoot: null,
-        referenceScale: null
+        referenceScale: null,
+        soundLabId: null
       },
       audio: {
         enabled:false,
@@ -10560,7 +10599,33 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             <option value="sixteenth" ${appState.progression.arpDivision === "sixteenth" ? "selected" : ""}>Semicorcheas</option>
           </select>
         </div>`;
+      /* ── Sound Lab timbre selector ── */
+      const slPresets = window.soundLabPresets || [];
+      const slTonal = ['pad','drone','lead','bass','acid','fm'];
+      const slId = appState.progression.soundLabId;
+      html += `<div class="field">
+        <label>Timbre (Sound Lab)</label>
+        <select id="progSoundLabSel">
+          <option value="">— Motor estándar —</option>
+          ${slPresets.map(sp => `<option value="${sp.id}" ${slId===sp.id?'selected':''}>${sp.name} [${(sp.engine||'').toUpperCase()}]</option>`).join('')}
+        </select>`;
+      if (slId) {
+        const loadedSl = slPresets.find(x => x.id === slId);
+        const eng = loadedSl && loadedSl.engine;
+        if (eng && !slTonal.includes(eng)) {
+          html += `<small style="font:400 9px 'IBM Plex Mono',monospace;color:rgba(255,176,0,.5);display:block;margin-top:4px;">Para progresiones convienen presets pad, lead, bass o drone.</small>`;
+        }
+      } else {
+        html += `<small style="font:400 9px 'IBM Plex Mono',monospace;color:rgba(255,176,0,.35);display:block;margin-top:4px;">Elegí un preset de Sound Lab para reemplazar el sintetizador estándar.</small>`;
+      }
+      html += `</div>`;
       $("#progressionAudioPanel").innerHTML = html;
+      /* Bind Sound Lab selector */
+      const progSlSel = document.getElementById('progSoundLabSel');
+      if (progSlSel) progSlSel.addEventListener('change', function() {
+        appState.progression.soundLabId = this.value || null;
+        renderProgressionAudioPanel();
+      });
       renderScaleListenControls();
       document.querySelectorAll(".chord-listen-controls").forEach(el => {
         const chord = deserializeChord(el.dataset.chordListen);
@@ -10773,6 +10838,29 @@ body:not(.day-mode) .music-controls .btn.icon:hover
     }
     function playProgressionChord(chord, quarter) {
       const midis = chord.notes.map(n => n.midi);
+      const slId = appState.progression.soundLabId;
+      /* ── Sound Lab timbre ── */
+      if (slId && typeof window.playSoundLabPreset === 'function') {
+        if (appState.progression.playbackMode === "sustain") {
+          midis.forEach(function(m) {
+            window.playSoundLabPreset(slId, { midi: m, duration: chord.beats * quarter / 1000 * 0.85 });
+          });
+        } else if (appState.progression.playbackMode === "pulse") {
+          midis.forEach(function(m) { window.playSoundLabPreset(slId, { midi: m }); });
+        } else {
+          const notes = appState.progression.playbackMode === "arp-down" ? [...chord.notes].reverse()
+            : appState.progression.playbackMode === "arp-updown" ? [...chord.notes, ...chord.notes.slice(1, -1).reverse()]
+            : chord.notes;
+          const div = appState.progression.arpDivision === "quarter" ? quarter : appState.progression.arpDivision === "sixteenth" ? quarter / 4 : quarter / 2;
+          notes.forEach((note, i) => {
+            sequenceTimers.push(setTimeout(() => {
+              window.playSoundLabPreset(slId, { midi: note.midi, duration: Math.max(0.08, div / 1000 * 0.8) });
+            }, i * div));
+          });
+        }
+        return;
+      }
+      /* ── Default: audioEngine ── */
       if (appState.progression.playbackMode === "sustain") {
         audioEngine.playChord(midis, chord.beats * quarter / 1000);
       } else if (appState.progression.playbackMode === "pulse") {
@@ -12358,6 +12446,28 @@ body:not(.day-mode) .music-controls .btn.icon:hover
     }
 
     function playRitmosNote(noteStr, durMs, id, soundType, hasAccent) {
+      /* Sound Lab preset: soundlab:sl-001 */
+      if (soundType && soundType.startsWith('soundlab:')) {
+        const slId = soundType.slice(9);
+        const slExists = window.soundLabPresets && window.soundLabPresets.some(x => x.id === slId);
+        if (!slExists) { console.warn('[Ritmos] Sound Lab preset no encontrado:', slId); return; }
+        if (typeof window.playSoundLabPreset === 'function') {
+          const slOpts = { volume: hasAccent ? 0.95 : 0.72 };
+          /* Try to pass note as midi for tonal presets */
+          if (noteStr) {
+            const slM = noteStr.match(/^([A-Ga-g][#b]?)(\d+)$/);
+            if (slM) {
+              const slNames = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+              const slFlat = {'Db':1,'Eb':3,'Gb':6,'Ab':8,'Bb':10};
+              const slPc = slM[1].toUpperCase();
+              const slIdx = slNames.indexOf(slPc) >= 0 ? slNames.indexOf(slPc) : (slFlat[slPc] !== undefined ? slFlat[slPc] : -1);
+              if (slIdx >= 0) slOpts.midi = slIdx + (parseInt(slM[2]) + 1) * 12;
+            }
+          }
+          window.playSoundLabPreset(slId, slOpts);
+        }
+        return;
+      }
       const isDrum = soundType && ["kick","snare","hihat","clave","clap","tom"].includes(soundType);
       // Acento: aumenta duración 20% y volumen
       const accentMul = hasAccent ? 1.2 : 1;
@@ -12491,12 +12601,20 @@ body:not(.day-mode) .music-controls .btn.icon:hover
       container.innerHTML = rs.parts.map((part, pi) => {
         const isSel = pi === rs.selectedPartIndex;
         const sound = part.sound || "sine";
-        const soundLabel = DRUM_SOUNDS[sound] || sound;
+        /* Sound Lab preset label */
+        let soundLabel;
+        if (sound.startsWith('soundlab:')) {
+          const slId = sound.slice(9);
+          const slPr = window.soundLabPresets && window.soundLabPresets.find(x => x.id === slId);
+          soundLabel = slPr ? ('SL: ' + slPr.name) : 'SL:?';
+        } else {
+          soundLabel = DRUM_SOUNDS[sound] || sound;
+        }
         const probs = part.probs || Array(16).fill(100);
         const accents = part.accents || Array(16).fill(0);
         const stepsHtml = Array.from({length: 16}, (_, i) => {
           const isOn = part.steps[i] === 1;
-          const isDrum = ["kick","snare","hihat","clave","clap","tom"].includes(sound);
+          const isDrum = sound.startsWith('soundlab:') || ["kick","snare","hihat","clave","clap","tom"].includes(sound);
           const label = isOn ? (isDrum ? "●" : (part.notes[i] || "C4").replace(/\d+$/, "")) : "";
           const isPlaying = i === rs.playingStep;
           const prob = probs[i] ?? 100;
@@ -12516,9 +12634,17 @@ body:not(.day-mode) .music-controls .btn.icon:hover
         const numHtml = Array.from({length: 16}, (_, i) =>
           `<div class="ritmos-step-num">${i+1}</div>`).join("");
         // Sound picker dropdown (details/summary)
+        const slPresets = window.soundLabPresets || [];
+        const slOptsHtml = slPresets.length
+          ? `<div style="border-top:1px solid rgba(255,176,0,.12);margin-top:4px;padding-top:4px;">
+               <div style="font:700 7px 'IBM Plex Mono',monospace;letter-spacing:.12em;color:rgba(255,176,0,.4);text-transform:uppercase;padding:2px 4px 4px;">Sound Lab</div>`
+            + slPresets.map(sp =>
+                `<button class="sound-opt${sound==='soundlab:'+sp.id?" active":""}" data-sound-set="${pi}" data-sound-val="soundlab:${sp.id}">SL: ${sp.name}</button>`
+              ).join('')
+            + `</div>` : '';
         const soundOptsHtml = DRUM_TYPES.map(s =>
           `<button class="sound-opt${s===sound?" active":""}" data-sound-set="${pi}" data-sound-val="${s}">${DRUM_SOUNDS[s]}</button>`
-        ).join("");
+        ).join("") + slOptsHtml;
         return `<div class="ritmos-part-row${isSel?" selected":""}" data-ritmos-part="${pi}">
           <div class="ritmos-part-header">
             <span class="ritmos-part-name" data-rename-part="${pi}" title="Doble clic para renombrar">${part.name}</span>
@@ -15404,6 +15530,744 @@ function s64LoadProject(file) {
 })();
 
 })(); // end IIFE
+</script>
+
+<script>
+/* ════════════════════════════════════════════════
+   SOUND LAB — Integración global
+   Synth engine · Presets · Export/Import · Ritmos · Seq64 · Progresiones
+   Globals: window.playSoundLabPreset(id, opts?)
+            window.soundLabPresets[]
+            window.playSeq64Sound(soundId, noteOrOpts)
+   ════════════════════════════════════════════════ */
+(function() {
+  'use strict';
+
+  /* ── State ── */
+  var SL = {
+    engine: 'kick',
+    params: { pitch:36, decay:0.4, attack:0.005, cutoff:2000, resonance:1, drive:0, delay:0, reverb:0.1, volume:0.8, pan:0, tone:0.5 },
+    presets: [],
+    editName: '',
+    loadedId: null,
+    loadedName: null,
+    status: '',
+    _statusT: null,
+    _ctx: null,
+    _analyser: null,
+    _animId: null
+  };
+
+  /* ── Status feedback ── */
+  function slStatus(msg) {
+    SL.status = msg;
+    var el = document.getElementById('slStatus');
+    if (el) { el.textContent = msg; el.style.opacity = '1'; }
+    clearTimeout(SL._statusT);
+    SL._statusT = setTimeout(function() {
+      SL.status = '';
+      var el2 = document.getElementById('slStatus');
+      if (el2) el2.style.opacity = '0';
+    }, 2200);
+  }
+
+  /* ── Built-in presets ── */
+  var SL_BUILT_IN = [
+    { id:'sl-001', name:'Kick Subgrave',  engine:'kick',    params:{pitch:36,  decay:0.5,  attack:0.001, cutoff:200,   resonance:1,  drive:0,    delay:0,    reverb:0.05, volume:0.9, pan:0, tone:0.2} },
+    { id:'sl-002', name:'Snare Noise',    engine:'snare',   params:{pitch:48,  decay:0.2,  attack:0.001, cutoff:4000,  resonance:2,  drive:0.1,  delay:0,    reverb:0.1,  volume:0.8, pan:0, tone:0.5} },
+    { id:'sl-003', name:'Hat Metálico',   engine:'hihat',   params:{pitch:72,  decay:0.08, attack:0.001, cutoff:10000, resonance:1,  drive:0,    delay:0,    reverb:0,    volume:0.7, pan:0, tone:0.7} },
+    { id:'sl-004', name:'Open Hat Largo', engine:'openhat', params:{pitch:72,  decay:0.4,  attack:0.001, cutoff:12000, resonance:1,  drive:0,    delay:0,    reverb:0.1,  volume:0.6, pan:0, tone:0.8} },
+    { id:'sl-005', name:'Clap Sala',      engine:'clap',    params:{pitch:60,  decay:0.25, attack:0.001, cutoff:6000,  resonance:1,  drive:0.05, delay:0,    reverb:0.25, volume:0.75,pan:0, tone:0.6} },
+    { id:'sl-006', name:'Tom Grave',      engine:'tom',     params:{pitch:41,  decay:0.35, attack:0.001, cutoff:1200,  resonance:1,  drive:0,    delay:0,    reverb:0.08, volume:0.8, pan:0, tone:0.4} },
+    { id:'sl-007', name:'Clave Seco',     engine:'clave',   params:{pitch:76,  decay:0.06, attack:0.001, cutoff:6000,  resonance:8,  drive:0,    delay:0,    reverb:0,    volume:0.8, pan:0, tone:0.7} },
+    { id:'sl-008', name:'Cowbell 808',    engine:'cowbell', params:{pitch:60,  decay:0.5,  attack:0.001, cutoff:5000,  resonance:1,  drive:0,    delay:0,    reverb:0,    volume:0.7, pan:0, tone:0.5} },
+    { id:'sl-009', name:'Zap IDM',        engine:'zap',     params:{pitch:80,  decay:0.15, attack:0.001, cutoff:5000,  resonance:4,  drive:0.4,  delay:0.1,  reverb:0,    volume:0.7, pan:0, tone:0.8} },
+    { id:'sl-010', name:'Noise Filtered', engine:'noise',   params:{pitch:60,  decay:1.0,  attack:0.1,   cutoff:800,   resonance:5,  drive:0,    delay:0.2,  reverb:0.3,  volume:0.5, pan:0, tone:0.4} },
+    { id:'sl-011', name:'Bass Acid',      engine:'acid',    params:{pitch:36,  decay:0.25, attack:0.005, cutoff:600,   resonance:8,  drive:0.3,  delay:0,    reverb:0,    volume:0.8, pan:0, tone:0.4} },
+    { id:'sl-012', name:'Pad Triste',     engine:'pad',     params:{pitch:60,  decay:3.0,  attack:0.4,   cutoff:800,   resonance:1,  drive:0,    delay:0.3,  reverb:0.5,  volume:0.6, pan:0, tone:0.3} },
+    { id:'sl-013', name:'FM Metal',       engine:'fm',      params:{pitch:48,  decay:0.3,  attack:0.002, cutoff:3000,  resonance:2,  drive:0.2,  delay:0,    reverb:0.1,  volume:0.7, pan:0, tone:0.6} },
+    { id:'sl-014', name:'Drone Oscuro',   engine:'drone',   params:{pitch:36,  decay:4.0,  attack:0.5,   cutoff:300,   resonance:3,  drive:0.2,  delay:0.3,  reverb:0.4,  volume:0.6, pan:0, tone:0.2} },
+    { id:'sl-015', name:'Lead Vibrato',   engine:'lead',    params:{pitch:60,  decay:0.8,  attack:0.02,  cutoff:1800,  resonance:2,  drive:0.1,  delay:0.2,  reverb:0.2,  volume:0.7, pan:0, tone:0.5} }
+  ];
+
+  var SL_ENGINE_LABELS = {
+    kick:'KICK', snare:'SNARE', hihat:'HIHAT', openhat:'OPEN',
+    clap:'CLAP', tom:'TOM', clave:'CLAVE', cowbell:'COWBELL',
+    zap:'ZAP', noise:'NOISE', acid:'ACID', bass:'BASS',
+    pad:'PAD', drone:'DRONE', lead:'LEAD', fm:'FM'
+  };
+
+  /* ── Audio helpers ── */
+  function slCtx() {
+    if (!SL._ctx || SL._ctx.state === 'closed') {
+      SL._ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (SL._ctx.state === 'suspended') SL._ctx.resume();
+    return SL._ctx;
+  }
+
+  function slMidi(n) { return 440 * Math.pow(2, (n - 69) / 12); }
+
+  function slReverb(ctx, dur, dec) {
+    var len = Math.max(1, Math.round(ctx.sampleRate * dur));
+    var b = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (var c = 0; c < 2; c++) {
+      var d = b.getChannelData(c);
+      for (var i = 0; i < len; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, dec||2);
+    }
+    return b;
+  }
+
+  /* Connect src → [drive] → filter → pan → vol → [delay] → [reverb] → dest
+     Also taps into analyser if available. Returns the vol node. */
+  function slChain(ctx, src, p, dest) {
+    var now = ctx.currentTime;
+    var cur = src;
+
+    if (p.drive > 0.01) {
+      var ws = ctx.createWaveShaper();
+      var k = p.drive * 200;
+      var cv = new Float32Array(256);
+      for (var i = 0; i < 256; i++) { var x=(i*2/256)-1; cv[i]=(Math.PI+k)*x/(Math.PI+k*Math.abs(x)); }
+      ws.curve = cv; ws.oversample = '4x';
+      cur.connect(ws); cur = ws;
+    }
+
+    var flt = ctx.createBiquadFilter();
+    flt.type = 'lowpass';
+    flt.frequency.setValueAtTime(Math.max(20, Math.min(20000, p.cutoff||2000)), now);
+    flt.Q.setValueAtTime(Math.max(0.1, p.resonance||1), now);
+    cur.connect(flt); cur = flt;
+
+    if (ctx.createStereoPanner) {
+      var pan = ctx.createStereoPanner();
+      pan.pan.setValueAtTime(Math.max(-1, Math.min(1, p.pan||0)), now);
+      cur.connect(pan); cur = pan;
+    }
+
+    var vol = ctx.createGain();
+    vol.gain.setValueAtTime(Math.max(0, Math.min(2, p.volume||0.8)), now);
+    cur.connect(vol);
+
+    if (p.delay > 0.01) {
+      var dly = ctx.createDelay(1.0);
+      var dlg = ctx.createGain();
+      var fb  = ctx.createGain();
+      dly.delayTime.setValueAtTime(0.25, now);
+      dlg.gain.setValueAtTime(p.delay * 0.7, now);
+      fb.gain.setValueAtTime(p.delay * 0.35, now);
+      vol.connect(dly); dly.connect(dlg); dlg.connect(dest);
+      dly.connect(fb); fb.connect(dly);
+    }
+    if (p.reverb > 0.01) {
+      var conv = ctx.createConvolver();
+      conv.buffer = slReverb(ctx, 1.8, 2);
+      var rvg = ctx.createGain();
+      rvg.gain.setValueAtTime(p.reverb, now);
+      vol.connect(conv); conv.connect(rvg); rvg.connect(dest);
+    }
+
+    if (SL._analyser) { vol.connect(SL._analyser); }
+    vol.connect(dest);
+    return vol;
+  }
+
+  /* ── Engines ── */
+  function eKick(ctx, dest, p) {
+    var now = ctx.currentTime, freq = slMidi(p.pitch||36), dec = p.decay||0.4;
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.setValueAtTime(freq*3, now);
+    o.frequency.exponentialRampToValueAtTime(Math.max(10,freq*0.25), now+dec);
+    g.gain.setValueAtTime(1, now); g.gain.exponentialRampToValueAtTime(0.001, now+dec+0.05);
+    o.connect(g); slChain(ctx, g, p, dest);
+    o.start(now); o.stop(now+dec+0.15);
+  }
+  function eSnare(ctx, dest, p) {
+    var now = ctx.currentTime, dec = p.decay||0.2;
+    var o = ctx.createOscillator(), og = ctx.createGain();
+    o.frequency.setValueAtTime(180, now); o.frequency.exponentialRampToValueAtTime(80, now+dec*0.3);
+    og.gain.setValueAtTime(0.5, now); og.gain.exponentialRampToValueAtTime(0.001, now+dec*0.5);
+    o.connect(og);
+    var bl = Math.max(1, Math.round(ctx.sampleRate*(dec+0.05)));
+    var buf = ctx.createBuffer(1, bl, ctx.sampleRate);
+    var d = buf.getChannelData(0); for (var i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    var ns = ctx.createBufferSource(); ns.buffer = buf;
+    var ng = ctx.createGain();
+    ng.gain.setValueAtTime(1, now); ng.gain.exponentialRampToValueAtTime(0.001, now+dec);
+    ns.connect(ng);
+    var mix = ctx.createGain(); og.connect(mix); ng.connect(mix);
+    slChain(ctx, mix, p, dest);
+    o.start(now); o.stop(now+dec+0.05); ns.start(now); ns.stop(now+dec+0.05);
+  }
+  function eHihat(ctx, dest, p) {
+    var now = ctx.currentTime, dec = p.decay||0.06;
+    var bl = Math.max(1, Math.round(ctx.sampleRate*(dec+0.05)));
+    var buf = ctx.createBuffer(1, bl, ctx.sampleRate);
+    var d = buf.getChannelData(0); for (var i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    var src = ctx.createBufferSource(); src.buffer = buf;
+    var hp = ctx.createBiquadFilter(); hp.type='highpass';
+    hp.frequency.setValueAtTime(7000, now);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(1, now); g.gain.exponentialRampToValueAtTime(0.001, now+dec);
+    src.connect(hp); hp.connect(g);
+    slChain(ctx, g, {pitch:p.pitch,drive:p.drive,delay:p.delay,reverb:p.reverb,volume:p.volume,pan:p.pan,cutoff:20000,resonance:0.5}, dest);
+    src.start(now); src.stop(now+dec+0.05);
+  }
+  function eOpenhat(ctx, dest, p) {
+    eHihat(ctx, dest, Object.assign({}, p, {decay:(p.decay||0.06)*5}));
+  }
+  function eClap(ctx, dest, p) {
+    var now = ctx.currentTime, dec = p.decay||0.2;
+    for (var b=0; b<3; b++) {
+      (function(b){ var t = now + b*0.011;
+        var bl = Math.max(1, Math.round(ctx.sampleRate*0.04));
+        var buf = ctx.createBuffer(1, bl, ctx.sampleRate);
+        var d = buf.getChannelData(0); for (var i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+        var src = ctx.createBufferSource(); src.buffer=buf;
+        var f = ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.setValueAtTime(1200,t); f.Q.setValueAtTime(0.5,t);
+        var g = ctx.createGain();
+        g.gain.setValueAtTime(b===2?1:0.45, t); g.gain.exponentialRampToValueAtTime(0.001, t+(b===2?dec:0.03));
+        src.connect(f); f.connect(g);
+        slChain(ctx, g, {drive:p.drive,delay:p.delay,reverb:p.reverb,volume:p.volume,pan:p.pan,cutoff:20000,resonance:0.5}, dest);
+        src.start(t); src.stop(t+dec+0.05);
+      })(b);
+    }
+  }
+  function eTom(ctx, dest, p) {
+    var now=ctx.currentTime, freq=slMidi(p.pitch||48), dec=p.decay||0.3;
+    var o=ctx.createOscillator(), g=ctx.createGain();
+    o.frequency.setValueAtTime(freq*1.6, now); o.frequency.exponentialRampToValueAtTime(Math.max(20,freq*0.7), now+dec*0.25);
+    g.gain.setValueAtTime(1, now); g.gain.exponentialRampToValueAtTime(0.001, now+dec);
+    o.connect(g); slChain(ctx, g, p, dest);
+    o.start(now); o.stop(now+dec+0.1);
+  }
+  function eClave(ctx, dest, p) {
+    var now=ctx.currentTime, freq=slMidi(p.pitch||76), dec=p.decay||0.06;
+    var o=ctx.createOscillator(); o.type='square'; o.frequency.setValueAtTime(freq, now);
+    var f=ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.setValueAtTime(freq, now); f.Q.setValueAtTime(20, now);
+    var g=ctx.createGain(); g.gain.setValueAtTime(1, now); g.gain.exponentialRampToValueAtTime(0.001, now+dec);
+    o.connect(f); f.connect(g); slChain(ctx, g, p, dest);
+    o.start(now); o.stop(now+dec+0.05);
+  }
+  function eCowbell(ctx, dest, p) {
+    var now=ctx.currentTime, freq=slMidi(p.pitch||60), dec=p.decay||0.45;
+    var mix=ctx.createGain();
+    [freq, freq*1.47].forEach(function(f) {
+      var o=ctx.createOscillator(); o.type='square'; o.frequency.setValueAtTime(f, now);
+      var g=ctx.createGain(); g.gain.setValueAtTime(0.5, now); g.gain.exponentialRampToValueAtTime(0.001, now+dec);
+      o.connect(g); g.connect(mix); o.start(now); o.stop(now+dec+0.05);
+    });
+    slChain(ctx, mix, p, dest);
+  }
+  function eZap(ctx, dest, p) {
+    var now=ctx.currentTime, freq=slMidi(p.pitch||80), dec=p.decay||0.15;
+    var o=ctx.createOscillator(); o.type='sawtooth';
+    o.frequency.setValueAtTime(freq*5, now); o.frequency.exponentialRampToValueAtTime(Math.max(20,freq*0.3), now+dec);
+    var g=ctx.createGain(); g.gain.setValueAtTime(1, now); g.gain.exponentialRampToValueAtTime(0.001, now+dec);
+    o.connect(g); slChain(ctx, g, p, dest);
+    o.start(now); o.stop(now+dec+0.05);
+  }
+  function eNoise(ctx, dest, p) {
+    var now=ctx.currentTime, dec=p.decay||1, atk=p.attack||0.1;
+    var bl=Math.max(1, Math.round(ctx.sampleRate*(dec+atk+0.1)));
+    var buf=ctx.createBuffer(1,bl,ctx.sampleRate);
+    var d=buf.getChannelData(0); for (var i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    var src=ctx.createBufferSource(); src.buffer=buf;
+    var g=ctx.createGain();
+    g.gain.setValueAtTime(0.001, now); g.gain.linearRampToValueAtTime(1, now+atk);
+    g.gain.exponentialRampToValueAtTime(0.001, now+atk+dec);
+    src.connect(g); slChain(ctx, g, p, dest);
+    src.start(now); src.stop(now+atk+dec+0.1);
+  }
+  function eAcid(ctx, dest, p) {
+    var now=ctx.currentTime, freq=slMidi(p.pitch||36), dec=p.decay||0.25, atk=p.attack||0.005;
+    var o=ctx.createOscillator(); o.type='sawtooth'; o.frequency.setValueAtTime(freq, now);
+    var f=ctx.createBiquadFilter(); f.type='lowpass';
+    var cut=Math.max(100, p.cutoff||600);
+    f.frequency.setValueAtTime(cut*4, now); f.frequency.exponentialRampToValueAtTime(Math.max(50,cut*0.4), now+dec);
+    f.Q.setValueAtTime(Math.max(1, (p.resonance||8)*1.5), now);
+    var g=ctx.createGain();
+    g.gain.setValueAtTime(0.001, now); g.gain.linearRampToValueAtTime(1, now+atk);
+    g.gain.exponentialRampToValueAtTime(0.001, now+atk+dec);
+    o.connect(f); f.connect(g);
+    slChain(ctx, g, {drive:p.drive,delay:p.delay,reverb:p.reverb,volume:p.volume,pan:p.pan,cutoff:20000,resonance:0.5}, dest);
+    o.start(now); o.stop(now+atk+dec+0.1);
+  }
+  function eBass(ctx, dest, p) {
+    var now=ctx.currentTime, freq=slMidi(p.pitch||36), dec=p.decay||0.5, atk=p.attack||0.005;
+    var o=ctx.createOscillator(); o.type='sawtooth'; o.frequency.setValueAtTime(freq, now);
+    var g=ctx.createGain();
+    g.gain.setValueAtTime(0.001, now); g.gain.linearRampToValueAtTime(1, now+atk);
+    g.gain.exponentialRampToValueAtTime(0.001, now+atk+dec);
+    o.connect(g); slChain(ctx, g, p, dest);
+    o.start(now); o.stop(now+atk+dec+0.1);
+  }
+  function ePad(ctx, dest, p) {
+    var now=ctx.currentTime, freq=slMidi(p.pitch||60), dec=Math.max(0.5,p.decay||3), atk=Math.max(0.05,p.attack||0.4);
+    var mix=ctx.createGain();
+    [-8,0,8].forEach(function(det) {
+      var o=ctx.createOscillator(); o.type='sawtooth'; o.frequency.setValueAtTime(freq,now); o.detune.setValueAtTime(det,now);
+      var g=ctx.createGain(); g.gain.setValueAtTime(0.001,now); g.gain.linearRampToValueAtTime(0.33,now+atk);
+      g.gain.exponentialRampToValueAtTime(0.001,now+atk+dec);
+      o.connect(g); g.connect(mix); o.start(now); o.stop(now+atk+dec+0.1);
+    });
+    slChain(ctx, mix, p, dest);
+  }
+  function eDrone(ctx, dest, p) {
+    var now=ctx.currentTime, freq=slMidi(p.pitch||36), dec=Math.max(1,p.decay||4), atk=Math.max(0.1,p.attack||0.5);
+    var mix=ctx.createGain();
+    [[1,0],[2,2],[0.5,-3]].forEach(function(pair) {
+      var o=ctx.createOscillator(); o.type='sawtooth'; o.frequency.setValueAtTime(freq*pair[0],now); o.detune.setValueAtTime(pair[1]*10,now);
+      var g=ctx.createGain(); g.gain.setValueAtTime(0.001,now); g.gain.linearRampToValueAtTime(0.33,now+atk);
+      g.gain.setTargetAtTime(0.001, now+atk+dec*0.7, dec*0.15);
+      o.connect(g); g.connect(mix); o.start(now); o.stop(now+atk+dec+0.5);
+    });
+    slChain(ctx, mix, p, dest);
+  }
+  function eLead(ctx, dest, p) {
+    var now=ctx.currentTime, freq=slMidi(p.pitch||60), dec=p.decay||0.8, atk=p.attack||0.02;
+    var o=ctx.createOscillator(); o.type='sawtooth'; o.frequency.setValueAtTime(freq,now);
+    var lfo=ctx.createOscillator(), lfog=ctx.createGain();
+    lfo.frequency.setValueAtTime(5,now); lfog.gain.setValueAtTime(freq*0.02,now);
+    lfo.connect(lfog); lfog.connect(o.frequency);
+    var g=ctx.createGain(); g.gain.setValueAtTime(0.001,now); g.gain.linearRampToValueAtTime(1,now+atk);
+    g.gain.exponentialRampToValueAtTime(0.001,now+atk+dec);
+    o.connect(g); slChain(ctx, g, p, dest);
+    o.start(now); lfo.start(now); o.stop(now+atk+dec+0.1); lfo.stop(now+atk+dec+0.1);
+  }
+  function eFM(ctx, dest, p) {
+    var now=ctx.currentTime, freq=slMidi(p.pitch||48), dec=p.decay||0.3, atk=p.attack||0.002;
+    var ratio=3.5, modIdx=150+(p.tone||0.5)*350;
+    var mod=ctx.createOscillator(), menv=ctx.createGain();
+    mod.frequency.setValueAtTime(freq*ratio,now);
+    menv.gain.setValueAtTime(modIdx,now); menv.gain.exponentialRampToValueAtTime(0.1,now+dec*0.5);
+    mod.connect(menv);
+    var car=ctx.createOscillator(); car.frequency.setValueAtTime(freq,now);
+    menv.connect(car.frequency);
+    var g=ctx.createGain(); g.gain.setValueAtTime(0.001,now); g.gain.linearRampToValueAtTime(1,now+atk);
+    g.gain.exponentialRampToValueAtTime(0.001,now+atk+dec);
+    car.connect(g); slChain(ctx, g, p, dest);
+    mod.start(now); car.start(now); mod.stop(now+atk+dec+0.1); car.stop(now+atk+dec+0.1);
+  }
+
+  var SL_ENGINES = {
+    kick:eKick, snare:eSnare, hihat:eHihat, openhat:eOpenhat,
+    clap:eClap, tom:eTom, clave:eClave, cowbell:eCowbell,
+    zap:eZap, noise:eNoise, acid:eAcid, bass:eBass,
+    pad:ePad, drone:eDrone, lead:eLead, fm:eFM
+  };
+
+  /* ── Helper: note string → MIDI number ── */
+  function slNoteToMidi(noteStr) {
+    var m = (noteStr+'').match(/^([A-Ga-g][#b]?)(-?\d+)$/);
+    if (!m) return null;
+    var names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    var flat  = {'Db':1,'Eb':3,'Gb':6,'Ab':8,'Bb':10};
+    var pc = m[1].toUpperCase();
+    var idx = names.indexOf(pc);
+    if (idx < 0) idx = flat[pc] !== undefined ? flat[pc] : -1;
+    if (idx < 0) return null;
+    return idx + (parseInt(m[2]) + 1) * 12;
+  }
+
+  /* ── Global API ── */
+  window.soundLabPresets = SL_BUILT_IN;
+  window.playSoundLabPreset = function(presetId, opts) {
+    var all = SL_BUILT_IN.concat(SL.presets);
+    for (var i=0; i<all.length; i++) {
+      if (all[i].id === presetId) {
+        try {
+          var ctx = slCtx();
+          var p = Object.assign({}, all[i].params, opts||{});
+          /* opts.midi or opts.note → override pitch */
+          if (opts && opts.midi !== undefined) p.pitch = opts.midi;
+          if (opts && opts.note !== undefined) {
+            var m = slNoteToMidi(opts.note);
+            if (m !== null) p.pitch = m;
+          }
+          /* opts.velocity 0-127 → scale volume */
+          if (opts && opts.velocity !== undefined) {
+            p.volume = (p.volume||0.8) * Math.pow(Math.max(1, opts.velocity) / 127, 0.8);
+          }
+          /* opts.duration → override decay */
+          if (opts && opts.duration !== undefined) p.decay = opts.duration;
+          var fn = SL_ENGINES[all[i].engine];
+          if (fn) fn(ctx, SL._analyser || ctx.destination, p);
+        } catch(e) {}
+        return;
+      }
+    }
+  };
+
+  /* ── Global: playSeq64Sound — ready for 64 SEQ integration ── */
+  window.playSeq64Sound = function(soundId, noteOrOpts) {
+    if (!soundId) return;
+    if (soundId.startsWith('soundlab:')) {
+      var id = soundId.slice(9);
+      var opts = typeof noteOrOpts === 'object' ? noteOrOpts : {};
+      if (typeof noteOrOpts === 'number') opts = { midi: noteOrOpts };
+      if (typeof noteOrOpts === 'string') opts = { note: noteOrOpts };
+      window.playSoundLabPreset(id, opts);
+    }
+  };
+
+  /* ── Persistence ── */
+  function slLoad() {
+    try { SL.presets = JSON.parse(localStorage.getItem('slPresets')||'[]'); } catch(e) { SL.presets=[]; }
+    window.soundLabPresets = SL_BUILT_IN.concat(SL.presets);
+  }
+  function slSave() {
+    try { localStorage.setItem('slPresets', JSON.stringify(SL.presets)); } catch(e) {}
+    window.soundLabPresets = SL_BUILT_IN.concat(SL.presets);
+  }
+
+  /* ── Export single preset JSON ── */
+  function slExportJSON(id) {
+    var all = SL_BUILT_IN.concat(SL.presets);
+    var pr = null;
+    for (var i=0;i<all.length;i++) if (all[i].id===id) { pr=all[i]; break; }
+    if (!pr) return;
+    var data = {
+      id: pr.id,
+      name: pr.name,
+      sourceType: pr.sourceType || 'synth',
+      engine: pr.engine,
+      params: pr.params,
+      createdAt: pr.createdAt || new Date().toISOString()
+    };
+    var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'sl-preset-'+pr.name.replace(/[^a-z0-9]/gi,'-').toLowerCase()+'.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    slStatus('Preset exportado');
+  }
+
+  /* ── Import preset JSON ── */
+  function slImportJSON() {
+    var inp = document.createElement('input');
+    inp.type='file'; inp.accept='.json,application/json';
+    inp.addEventListener('change', function() {
+      var file = inp.files[0]; if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        try {
+          var data = JSON.parse(ev.target.result);
+          if (!data.engine || !data.params) { slStatus('JSON inválido'); return; }
+          /* Assign new ID to avoid collisions */
+          var newId = 'sl-u' + Date.now();
+          SL.presets.push({
+            id: newId,
+            name: data.name || 'Importado',
+            sourceType: data.sourceType || 'synth',
+            engine: data.engine,
+            params: Object.assign({}, data.params),
+            createdAt: data.createdAt || new Date().toISOString()
+          });
+          slSave(); slStatus('Preset importado'); slRender();
+        } catch(e) { slStatus('Error al leer JSON'); }
+      };
+      reader.readAsText(file);
+    });
+    inp.click();
+  }
+
+  /* ── Controls definition ── */
+  var SL_CTRLS = [
+    { key:'pitch',     label:'PITCH',  min:0,    max:127,   step:1,     fmt:function(v){ var notes=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']; return notes[v%12]+(Math.floor(v/12)-1); } },
+    { key:'decay',     label:'DECAY',  min:0.01, max:4,     step:0.01,  fmt:function(v){ return v.toFixed(2)+'s'; } },
+    { key:'attack',    label:'ATTACK', min:0.001,max:1,     step:0.001, fmt:function(v){ return Math.round(v*1000)+'ms'; } },
+    { key:'cutoff',    label:'CUTOFF', min:20,   max:20000, step:10,    fmt:function(v){ return v>=1000?(v/1000).toFixed(1)+'k':Math.round(v)+'Hz'; } },
+    { key:'resonance', label:'RESO',   min:0.1,  max:20,    step:0.1,   fmt:function(v){ return 'Q'+v.toFixed(1); } },
+    { key:'drive',     label:'DRIVE',  min:0,    max:1,     step:0.01,  fmt:function(v){ return Math.round(v*100)+'%'; } },
+    { key:'delay',     label:'DELAY',  min:0,    max:1,     step:0.01,  fmt:function(v){ return Math.round(v*100)+'%'; } },
+    { key:'reverb',    label:'REVERB', min:0,    max:1,     step:0.01,  fmt:function(v){ return Math.round(v*100)+'%'; } },
+    { key:'volume',    label:'VOL',    min:0,    max:1,     step:0.01,  fmt:function(v){ return Math.round(v*100)+'%'; } },
+    { key:'pan',       label:'PAN',    min:-1,   max:1,     step:0.01,  fmt:function(v){ return v===0?'C':(v<0?'L'+Math.round(-v*100):'R'+Math.round(v*100)); } }
+  ];
+
+  /* ── Render ── */
+  function slRender() {
+    var el = document.getElementById('soundlab');
+    if (!el) return;
+    var p = SL.params;
+
+    var h = '<div class="sl-section">';
+
+    /* ── Header ── */
+    h += '<div style="font:700 9px \'IBM Plex Mono\',monospace;letter-spacing:.2em;color:var(--gold);opacity:.55;text-transform:uppercase;margin-bottom:4px;">Laboratorio Sonoro</div>';
+    h += '<h2 style="font:800 clamp(22px,5vw,38px) \'IBM Plex Mono\',monospace;color:var(--ink);margin:0 0 6px;letter-spacing:-.02em;">Sound Lab</h2>';
+    h += '<p style="font:400 11px \'IBM Plex Mono\',monospace;color:var(--muted);margin:0 0 20px;max-width:560px;">'
+       + 'Sound Lab crea sonidos con Web Audio. Podés guardar presets y usarlos en Ritmo, Secuencia 64 o Progresiones. '
+       + 'En esta etapa los sonidos son de síntesis: no usan samples externos.</p>';
+
+    /* ── Editando: [nombre del preset] ── */
+    var editLabel = SL.loadedName ? ('Editando: <b>'+SL.loadedName+'</b>') : 'Sonido nuevo (sin preset cargado)';
+    h += '<div style="font:400 10px \'IBM Plex Mono\',monospace;color:rgba(255,176,0,.5);margin-bottom:14px;border-left:2px solid rgba(255,176,0,.2);padding-left:8px;">'
+       + editLabel + '</div>';
+
+    /* ── Engine selector ── */
+    h += '<div style="margin-bottom:18px;">';
+    h += '<div class="sl-knob-label" style="margin-bottom:8px;">Motor</div>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
+    Object.keys(SL_ENGINE_LABELS).forEach(function(key) {
+      var on = SL.engine===key;
+      h += '<button class="sl-eng-btn'+(on?' sl-active':'')+'" data-sl-engine="'+key+'"'
+         + ' style="font:700 9px \'IBM Plex Mono\',monospace;padding:5px 9px;border:1px solid '
+         + (on?'rgba(255,176,0,.7)':'rgba(255,176,0,.18)')+';background:'
+         + (on?'rgba(255,176,0,.14)':'none')+';color:'
+         + (on?'var(--gold)':'rgba(255,176,0,.45)')+';cursor:pointer;">'
+         + SL_ENGINE_LABELS[key]+'</button>';
+    });
+    h += '</div></div>';
+
+    /* ── Controls (sliders) ── */
+    h += '<div class="sl-knob-row" style="margin-bottom:20px;">';
+    SL_CTRLS.forEach(function(c) {
+      var v = p[c.key] !== undefined ? p[c.key] : 0;
+      h += '<div>';
+      h += '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">';
+      h += '<span class="sl-knob-label">'+c.label+'</span>';
+      h += '<span class="sl-knob-val" id="slv_'+c.key+'">'+c.fmt(v)+'</span>';
+      h += '</div>';
+      h += '<input class="sl-range" type="range" id="slr_'+c.key+'" min="'+c.min+'" max="'+c.max+'" step="'+c.step+'" value="'+v+'">';
+      h += '</div>';
+    });
+    h += '</div>';
+
+    /* ── TEST button + waveform canvas ── */
+    h += '<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap;">';
+    h += '<button id="slPlayBtn" class="sl-play-btn">▶ TEST</button>';
+    h += '<canvas id="slCanvas" style="border:1px solid rgba(255,176,0,.14);background:rgba(0,0,0,.12);flex:1;min-width:180px;height:58px;max-width:100%;display:block;"></canvas>';
+    h += '</div>';
+
+    /* ── Save / Duplicate row ── */
+    h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">';
+    h += '<input id="slName" class="sl-name-input" type="text" placeholder="Nombre del preset…" maxlength="40" value="'+(SL.editName||'')+'">';
+    h += '<button id="slSaveBtn" class="sl-save-btn">+ GUARDAR</button>';
+    if (SL.loadedId) {
+      h += '<button id="slDupBtn" class="sl-save-btn" style="border-color:rgba(255,176,0,.2);" title="Duplicar preset cargado">⊕ DUPLICAR</button>';
+    }
+    h += '</div>';
+    /* Status feedback */
+    h += '<div id="slStatus" style="font:700 9px \'IBM Plex Mono\',monospace;color:rgba(255,176,0,.8);letter-spacing:.12em;min-height:16px;margin-bottom:20px;transition:opacity .4s;"'
+       + (SL.status?'':'style="opacity:0;"')+'>'+(SL.status||'')+'</div>';
+
+    /* ── Presets de fábrica ── */
+    h += '<details open style="margin-bottom:20px;">';
+    h += '<summary style="font:700 9px \'IBM Plex Mono\',monospace;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;cursor:pointer;user-select:none;margin-bottom:10px;list-style:none;">'
+       + '▸ PRESETS DE FÁBRICA <span style="color:rgba(255,176,0,.4);font-weight:400;">'+SL_BUILT_IN.length+'</span></summary>';
+    h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:8px;">';
+    SL_BUILT_IN.forEach(function(pr) {
+      var isLoaded = SL.loadedId === pr.id;
+      h += '<div class="sl-preset-card"'+(isLoaded?' style="border-color:rgba(255,176,0,.45);background:rgba(255,176,0,.08);"':'')+' >';
+      h += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+      h += '<span class="sl-preset-tag">'+SL_ENGINE_LABELS[pr.engine]+'</span>';
+      if (isLoaded) h += '<span style="font:700 7px \'IBM Plex Mono\',monospace;color:var(--gold);">CARGADO</span>';
+      h += '</div>';
+      h += '<div class="sl-preset-name">'+pr.name+'</div>';
+      h += '<div style="display:flex;gap:4px;">';
+      h += '<button class="sl-preset-play" data-sl-play="'+pr.id+'" title="Escuchar">▶</button>';
+      h += '<button class="sl-preset-load" data-sl-load="'+pr.id+'" title="Cargar en editor">EDITAR →</button>';
+      h += '<button class="sl-preset-play" data-sl-export="'+pr.id+'" title="Exportar JSON" style="flex:0;padding:4px 6px;">⬇</button>';
+      h += '</div></div>';
+    });
+    h += '</div></details>';
+
+    /* ── Mis presets ── */
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">';
+    h += '<span style="font:700 9px \'IBM Plex Mono\',monospace;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;">MIS PRESETS <span style="color:rgba(255,176,0,.4);font-weight:400;">'+SL.presets.length+'</span></span>';
+    h += '<div style="display:flex;gap:6px;">';
+    h += '<button id="slImportBtn" class="sl-save-btn" style="font-size:8px;padding:5px 10px;">⬆ IMPORTAR JSON</button>';
+    h += '</div></div>';
+
+    if (SL.presets.length === 0) {
+      h += '<p style="font:400 10px \'IBM Plex Mono\',monospace;color:var(--muted);margin:0 0 20px;">Todavía no guardaste ningún preset. Configurá un sonido arriba y dale "Guardar".</p>';
+    } else {
+      h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:8px;margin-bottom:20px;">';
+      SL.presets.forEach(function(pr) {
+        var isLoaded = SL.loadedId === pr.id;
+        h += '<div class="sl-preset-card"'+(isLoaded?' style="border-color:rgba(255,176,0,.45);background:rgba(255,176,0,.08);"':'')+' >';
+        h += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+        h += '<span class="sl-preset-tag">'+SL_ENGINE_LABELS[pr.engine]+'</span>';
+        h += '<button class="sl-preset-del" data-sl-del="'+pr.id+'" title="Eliminar preset">✕</button>';
+        h += '</div>';
+        h += '<div class="sl-preset-name">'+pr.name+'</div>';
+        if (isLoaded) h += '<div style="font:700 7px \'IBM Plex Mono\',monospace;color:var(--gold);margin-bottom:2px;">CARGADO</div>';
+        h += '<div style="display:flex;gap:4px;">';
+        h += '<button class="sl-preset-play" data-sl-play="'+pr.id+'" title="Escuchar">▶</button>';
+        h += '<button class="sl-preset-load" data-sl-load="'+pr.id+'" title="Cargar en editor">EDITAR →</button>';
+        h += '<button class="sl-preset-play" data-sl-export="'+pr.id+'" title="Exportar JSON" style="flex:0;padding:4px 6px;">⬇</button>';
+        h += '</div></div>';
+      });
+      h += '</div>';
+    }
+
+    h += '</div>'; /* sl-section */
+
+    el.innerHTML = h;
+    slBind();
+    slWave();
+  }
+
+  /* ── Waveform visualizer ── */
+  function slWave() {
+    if (SL._animId) { cancelAnimationFrame(SL._animId); SL._animId = null; }
+    var canvas = document.getElementById('slCanvas');
+    if (!canvas) return;
+    try {
+      var ctx = slCtx();
+      if (!SL._analyser) {
+        SL._analyser = ctx.createAnalyser();
+        SL._analyser.fftSize = 512;
+        SL._analyser.connect(ctx.destination);
+      }
+    } catch(e) { return; }
+    var data = new Uint8Array(SL._analyser.frequencyBinCount);
+    function draw() {
+      SL._animId = requestAnimationFrame(draw);
+      var cv = document.getElementById('slCanvas');
+      if (!cv || !SL._analyser) { cancelAnimationFrame(SL._animId); SL._animId=null; return; }
+      var W = cv.clientWidth||300, H = cv.clientHeight||58;
+      if (cv.width!==W) cv.width=W;
+      if (cv.height!==H) cv.height=H;
+      var cc = cv.getContext('2d');
+      cc.clearRect(0,0,W,H);
+      cc.fillStyle='rgba(0,0,0,.12)'; cc.fillRect(0,0,W,H);
+      SL._analyser.getByteTimeDomainData(data);
+      cc.beginPath(); cc.strokeStyle='rgba(255,176,0,.85)'; cc.lineWidth=1.5;
+      var sw = W/data.length;
+      for (var i=0; i<data.length; i++) {
+        var y = ((data[i]/128)-1) * H/2 + H/2;
+        i===0 ? cc.moveTo(0,y) : cc.lineTo(i*sw,y);
+      }
+      cc.stroke();
+    }
+    draw();
+  }
+
+  /* ── Bind events ── */
+  function slBind() {
+    /* Engine buttons */
+    document.querySelectorAll('[data-sl-engine]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        SL.engine = this.dataset.slEngine;
+        var def = SL_BUILT_IN.find(function(pr){ return pr.engine===SL.engine; });
+        if (def) SL.params = Object.assign({}, def.params);
+        SL.loadedId = null; SL.loadedName = null;
+        slRender();
+      });
+    });
+    /* Sliders */
+    SL_CTRLS.forEach(function(c) {
+      var el=document.getElementById('slr_'+c.key), vl=document.getElementById('slv_'+c.key);
+      if (!el) return;
+      el.addEventListener('input', function() {
+        var v=parseFloat(this.value); SL.params[c.key]=v;
+        if (vl) vl.textContent=c.fmt(v);
+        /* Changing params drifts from loaded preset */
+        if (SL.loadedId) {
+          SL.loadedName = (SL.loadedName||'?') + ' *';
+          SL.loadedId = null;
+          var lbl = document.querySelector('#soundlab [data-sl-editlabel]');
+          if (lbl) lbl.textContent = SL.loadedName + ' (modificado)';
+        }
+      });
+    });
+    /* TEST play */
+    var pb=document.getElementById('slPlayBtn');
+    if (pb) pb.addEventListener('click', function() {
+      try {
+        var ctx=slCtx();
+        var fn=SL_ENGINES[SL.engine];
+        if (fn) fn(ctx, SL._analyser||ctx.destination, SL.params);
+      } catch(e){}
+    });
+    /* Preset name input */
+    var ni=document.getElementById('slName');
+    if (ni) ni.addEventListener('input', function(){ SL.editName=this.value; });
+    /* Save */
+    var sb=document.getElementById('slSaveBtn');
+    if (sb) sb.addEventListener('click', function() {
+      var name=(SL.editName||'').trim()||('Preset '+(SL.presets.length+1));
+      var newId = 'sl-u'+Date.now();
+      SL.presets.push({
+        id: newId, name: name, sourceType:'synth',
+        engine: SL.engine, params: Object.assign({},SL.params),
+        createdAt: new Date().toISOString()
+      });
+      SL.loadedId = newId; SL.loadedName = name;
+      slSave(); SL.editName=''; slStatus('Preset guardado'); slRender();
+    });
+    /* Duplicate loaded preset */
+    var db=document.getElementById('slDupBtn');
+    if (db) db.addEventListener('click', function() {
+      var newId = 'sl-u'+Date.now();
+      var name = (SL.loadedName||'Preset') + ' (copia)';
+      SL.presets.push({
+        id: newId, name: name, sourceType:'synth',
+        engine: SL.engine, params: Object.assign({},SL.params),
+        createdAt: new Date().toISOString()
+      });
+      SL.loadedId = newId; SL.loadedName = name; SL.editName = name;
+      slSave(); slStatus('Preset duplicado'); slRender();
+    });
+    /* Play preset */
+    document.querySelectorAll('[data-sl-play]').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation(); window.playSoundLabPreset(this.dataset.slPlay);
+      });
+    });
+    /* Load preset into editor */
+    document.querySelectorAll('[data-sl-load]').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var id=this.dataset.slLoad, all=SL_BUILT_IN.concat(SL.presets);
+        var pr=all.find(function(x){ return x.id===id; });
+        if (!pr) return;
+        SL.engine=pr.engine; SL.params=Object.assign({},pr.params);
+        SL.editName=''; SL.loadedId=pr.id; SL.loadedName=pr.name;
+        slStatus('Preset cargado'); slRender();
+        document.getElementById('soundlab').scrollIntoView({behavior:'smooth'});
+      });
+    });
+    /* Export preset JSON */
+    document.querySelectorAll('[data-sl-export]').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation(); slExportJSON(this.dataset.slExport);
+      });
+    });
+    /* Import JSON */
+    var ib=document.getElementById('slImportBtn');
+    if (ib) ib.addEventListener('click', slImportJSON);
+    /* Delete user preset */
+    document.querySelectorAll('[data-sl-del]').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var id=this.dataset.slDel;
+        if (SL.loadedId===id) { SL.loadedId=null; SL.loadedName=null; }
+        SL.presets=SL.presets.filter(function(x){ return x.id!==id; });
+        slSave(); slStatus('Preset eliminado'); slRender();
+      });
+    });
+  }
+
+  /* ── Init ── */
+  slLoad();
+  /* Re-render when Sound Lab tab is activated */
+  document.addEventListener('click', function(e) {
+    if (e.target && e.target.dataset && e.target.dataset.navView==='soundlab') {
+      setTimeout(slRender, 60);
+    }
+  });
+  /* Also handle home tile clicks */
+  document.addEventListener('click', function(e) {
+    var t = e.target.closest('[data-nav-view="soundlab"]');
+    if (t) setTimeout(slRender, 60);
+  });
+
+})(); /* end Sound Lab */
 </script>
 </body>
 </html>
