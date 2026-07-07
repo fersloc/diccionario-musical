@@ -757,9 +757,15 @@
       .mini-actions {
         gap: 6px;
       }
+      .visual-map {
+        min-width: 0;
+        overflow-x: auto;
+      }
       .visual-map svg {
-        min-width: 420px;
-        height: 250px;
+        min-width: 300px;
+        width: max(300px, 100%);
+        height: auto;
+        aspect-ratio: 640 / 360;
       }
       .smart-tip {
         font-size: 12px;
@@ -5981,7 +5987,9 @@ body:not(.day-mode) .music-controls .btn.icon:hover
 .s64-proj-note { font-size: 9px; color: rgba(255,176,0,.45); margin-top: 10px; }
 .s64-proj-name { background: none; border: 1px solid rgba(255,176,0,.25); color: var(--ink); font-size: 11px; padding: 6px 10px; font-family: 'IBM Plex Mono', monospace; outline: none; width: 180px; }
 @media (max-width: 600px) {
-  .s64-step { min-height: 32px; }
+  .s64-grid { overflow-x: hidden; }
+  .s64-row { grid-template-columns: repeat(16, minmax(0, 1fr)); }
+  .s64-step { min-height: 26px; min-width: 0; aspect-ratio: 1; }
   .s64-step-note { font-size: 6px; }
   .s64-step-num { font-size: 5px; }
   .s64-transport { gap: 10px; }
@@ -13799,6 +13807,88 @@ function s64SetBPM(val) {
   if (seq64State.playing) { clearInterval(seq64State._timer); var ms = (60000 / seq64State.bpm) / 2; seq64State._timer = setInterval(s64Tick, ms); }
 }
 
+/* ── Biblioteca de ejemplos ── */
+var S64_BIBLIOTECA = [
+  {
+    id: 'escalas', title: 'Escalas básicas',
+    seqs: [
+      { name: 'C mayor ida/vuelta',  len: 16, load: 'C4 D4 E4 F4 G4 A4 B4 C5 B4 A4 G4 F4 E4 D4 C4 D4' },
+      { name: 'A menor natural',     len: 16, load: 'A3 B3 C4 D4 E4 F4 G4 A4 G4 F4 E4 D4 C4 B3 A3 B3' },
+      { name: 'A menor armónica',    len: 16, load: 'A3 B3 C4 D4 E4 F4 Ab4 A4 Ab4 F4 E4 D4 C4 B3 A3 B3' },
+      { name: 'A menor melódica',    len: 16, load: 'A3 B3 C4 D4 E4 Gb4 Ab4 A4 Ab4 Gb4 E4 D4 C4 B3 A3 B3' },
+      { name: 'C pentatónica mayor', len: 16, load: 'C4 D4 E4 G4 A4 C5 A4 G4 E4 D4 C4 D4 E4 G4 A4 C5' },
+      { name: 'A pentatónica menor', len: 16, load: 'A3 C4 D4 E4 G4 A4 G4 E4 D4 C4 A3 C4 D4 E4 G4 A4' },
+      { name: 'A blues',             len: 16, load: 'A3 C4 D4 Eb4 E4 G4 A4 G4 E4 Eb4 D4 C4 A3 C4 D4 Eb4' },
+      { name: 'C cromática',         len: 16, load: 'C4 Db4 D4 Eb4 E4 F4 Gb4 G4 Ab4 A4 Bb4 B4 C5 B4 Bb4 A4' }
+    ]
+  },
+  {
+    id: 'triadas', title: 'Tríadas mayor/menor',
+    seqs: [
+      { name: 'C mayor chord+arp', len: 16, load: 'C3 C3 E3 G3 C3 G3 E3 C3 C3 C3 E3 G3 C3 G3 E3 C3' },
+      { name: 'C menor chord+arp', len: 16, load: 'C3 C3 Eb3 G3 C3 G3 Eb3 C3 C3 C3 Eb3 G3 C3 G3 Eb3 C3' },
+      { name: 'F mayor chord+arp', len: 16, load: 'F3 F3 A3 C4 F3 C4 A3 F3 F3 F3 A3 C4 F3 C4 A3 F3' },
+      { name: 'F menor chord+arp', len: 16, load: 'F3 F3 Ab3 C4 F3 C4 Ab3 F3 F3 F3 Ab3 C4 F3 C4 Ab3 F3' },
+      { name: 'G mayor chord+arp', len: 16, load: 'G3 G3 B3 D4 G3 D4 B3 G3 G3 G3 B3 D4 G3 D4 B3 G3' },
+      { name: 'G menor chord+arp', len: 16, load: 'G3 G3 Bb3 D4 G3 D4 Bb3 G3 G3 G3 Bb3 D4 G3 D4 Bb3 G3' },
+      { name: 'A mayor chord+arp', len: 16, load: 'A3 A3 Db4 E4 A3 E4 Db4 A3 A3 A3 Db4 E4 A3 E4 Db4 A3' },
+      { name: 'A menor chord+arp', len: 16, load: 'A3 A3 C4 E4 A3 E4 C4 A3 A3 A3 C4 E4 A3 E4 C4 A3' }
+    ]
+  },
+  {
+    id: 'tristes', title: 'Progresiones tristes',
+    seqs: [
+      { name: 'Am F C G',    len: 32, load: 'A3 E4 C4 E4 A4 E4 C4 E4 F3 C4 A3 C4 F4 C4 A3 C4 C3 G3 E3 G3 C4 G3 E3 G3 G3 D4 B3 D4 G4 D4 B3 D4' },
+      { name: 'Em C G D',    len: 32, load: 'E3 B3 G3 B3 E4 B3 G3 B3 C3 G3 E3 G3 C4 G3 E3 G3 G3 D4 B3 D4 G4 D4 B3 D4 D3 A3 Gb3 A3 D4 A3 Gb3 A3' },
+      { name: 'Dm Bb F C',   len: 32, load: 'D3 A3 F3 A3 D4 A3 F3 A3 Bb3 F4 D4 F4 Bb4 F4 D4 F4 F3 C4 A3 C4 F4 C4 A3 C4 C3 G3 E3 G3 C4 G3 E3 G3' },
+      { name: 'Cm Ab Eb Bb', len: 32, load: 'C3 G3 Eb3 G3 C4 G3 Eb3 G3 Ab3 Eb4 C4 Eb4 Ab4 Eb4 C4 Eb4 Eb3 Bb3 G3 Bb3 Eb4 Bb3 G3 Bb3 Bb3 F4 D4 F4 Bb4 F4 D4 F4' },
+      { name: 'Fm Db Ab Eb', len: 32, load: 'F3 C4 Ab3 C4 F4 C4 Ab3 C4 Db3 Ab3 F3 Ab3 Db4 Ab3 F3 Ab3 Ab3 Eb4 C4 Eb4 Ab4 Eb4 C4 Eb4 Eb3 Bb3 G3 Bb3 Eb4 Bb3 G3 Bb3' },
+      { name: 'Bm G D A',    len: 32, load: 'B3 Gb4 D4 Gb4 B4 Gb4 D4 Gb4 G3 D4 B3 D4 G4 D4 B3 D4 D3 A3 Gb3 A3 D4 A3 Gb3 A3 A3 E4 Db4 E4 A4 E4 Db4 E4' },
+      { name: 'C#m A E B',   len: 32, load: 'Db3 Ab3 E3 Ab3 Db4 Ab3 E3 Ab3 A3 E4 Db4 E4 A4 E4 Db4 E4 E3 B3 Ab3 B3 E4 B3 Ab3 B3 B3 Gb4 Eb4 Gb4 B4 Gb4 Eb4 Gb4' },
+      { name: 'Gm Eb Bb F',  len: 32, load: 'G3 D4 Bb3 D4 G4 D4 Bb3 D4 Eb3 Bb3 G3 Bb3 Eb4 Bb3 G3 Bb3 Bb3 F4 D4 F4 Bb4 F4 D4 F4 F3 C4 A3 C4 F4 C4 A3 C4' }
+    ]
+  },
+  {
+    id: 'acid', title: 'Bajos acid TD-3',
+    seqs: [
+      { name: 'C minor acid',   len: 16, load: 'C2 _ C3 Eb2 _ G2 _ Bb2 C2 _ Eb3 _ G2 C3 _ Bb2' },
+      { name: 'E phrygian bite',len: 16, load: 'E2 E2 _ F2 _ G2 E3 _ D3 _ C3 _ B2 G2 _ F2' },
+      { name: 'A dark 303',     len: 16, load: 'A1 _ A2 _ C3 E2 _ G2 A2 _ C3 A1 _ E3 _ G2' },
+      { name: 'F# warehouse',   len: 16, load: 'F#2 _ C#3 F#2 _ A2 _ E3 F#2 G2 _ A2 _ C#3 _ E2' },
+      { name: 'D minor rubber', len: 16, load: 'D2 _ A2 _ F2 _ C3 D3 _ A2 D2 _ F3 _ E3 C3' },
+      { name: 'G minor squelch',len: 16, load: 'G1 G2 _ Bb2 _ D3 _ F2 G2 _ Bb1 C3 _ D3 _ F3' },
+      { name: 'Bb low crawl',   len: 16, load: 'Bb1 _ Bb2 Db3 _ F2 Ab2 _ Bb1 _ Db2 _ F3 Ab2 _ Bb2' },
+      { name: 'C acid offbeat', len: 16, load: '_ C2 _ Eb2 G2 _ C3 _ Bb2 C2 _ G2 _ Eb3 D3 _' }
+    ]
+  },
+  {
+    id: 'idm', title: 'Arpegios IDM / Aphex',
+    seqs: [
+      { name: 'C min 7-bit shimmer',   len: 32, load: 'C3 G3 Eb4 _ Bb3 G4 C4 _ Eb3 Bb3 G4 F4 _ C4 G3 Bb4 C3 _ Eb4 G3 Bb3 _ C5 G4 Eb4 C4 _ Bb3 G3 F4 _ C4' },
+      { name: 'F dorian glass',        len: 32, load: 'F3 _ C4 Ab3 Eb4 G4 _ C4 F4 Eb4 _ Ab4 G4 C4 F3 _ F3 G3 Ab3 _ C4 Eb4 F4 G4 _ Ab4 C5 Eb5 _ C5 Ab4 G4' },
+      { name: 'E minor polite glitch', len: 32, load: 'E3 B3 _ G4 F#4 _ B4 E4 D4 _ G3 B3 E4 _ F#4 D5 E3 _ G3 B3 _ E4 D4 B3 G4 _ F#4 E4 _ D4 B3 E5' },
+      { name: 'A harmonic minor toy',  len: 32, load: 'A3 E4 C5 _ Ab4 E4 B4 _ C5 A4 E5 Ab4 _ F4 E4 C5 A3 _ C4 E4 Ab4 B4 _ C5 E5 C5 _ B4 Ab4 E4 C4 A3' },
+      { name: 'D phrygian dark bell',  len: 32, load: 'D3 Eb4 _ A3 F4 D4 C4 _ Eb3 A3 D4 _ F4 Eb4 C4 A3 D3 _ F3 A3 C4 _ D4 Eb4 F4 _ A4 C5 A4 F4 _ D4' },
+      { name: 'G minor floating',      len: 32, load: 'G3 _ D4 Bb4 F4 D5 _ Bb4 G4 F4 _ D4 Bb3 G3 _ F3 G3 Bb3 D4 _ F4 G4 Bb4 _ D5 F5 D5 Bb4 _ G4 F4 D4' },
+      { name: 'Bb lydian-ish',         len: 32, load: 'Bb3 F4 C5 _ E4 F4 A4 _ Bb4 C5 E5 F5 _ C5 A4 F4 Bb3 _ C4 E4 F4 _ A4 Bb4 C5 _ F5 E5 C5 A4 _ Bb4' },
+      { name: 'C# cold machine',       len: 32, load: 'Db3 Ab3 _ E4 B3 Ab4 Db4 _ E3 B3 Ab4 F#4 _ Db4 Ab3 B4 Db3 _ E4 Ab3 B3 _ Db5 Ab4 E4 Db4 _ B3 Ab3 F#4 _ Db4' }
+    ]
+  },
+  {
+    id: 'dnb', title: 'Frases DnB oscuras',
+    seqs: [
+      { name: 'C minor reese',  len: 32, load: 'C2 _ _ C2 Eb2 _ G2 _ _ Bb1 _ C2 _ G1 Bb1 _ C2 _ Eb2 _ G2 _ _ Bb2 _ C3 _ Bb2 G2 _ Eb2 _' },
+      { name: 'F dark roller',  len: 32, load: 'F1 _ F2 _ _ Ab2 _ C3 Eb2 _ _ F2 _ C2 _ _ F1 _ _ Ab1 C2 _ Eb2 _ _ F2 G2 _ Ab2 _ C3 _' },
+      { name: 'E halfstep',     len: 32, load: 'E1 _ _ _ E2 _ G2 _ B1 _ _ D2 _ _ E2 _ E1 _ F2 _ G2 _ _ B2 _ D3 _ B2 G2 _ _ _' },
+      { name: 'D minor break',  len: 32, load: 'D2 _ A1 D2 _ F2 _ _ C3 _ A2 _ D3 _ _ C2 D2 _ _ F1 A1 _ C2 _ D2 _ F2 _ E2 C2 _ _' },
+      { name: 'G minor neuro',  len: 32, load: 'G1 _ _ G2 Bb1 _ D2 _ F2 _ G2 _ _ D2 _ F1 G1 _ Bb1 _ D2 _ _ F2 G2 _ Bb2 _ D3 _ F2 _' },
+      { name: 'Bb sub question',len: 32, load: 'Bb1 _ F2 _ Db2 _ _ Ab1 _ Bb1 _ Db2 F2 _ _ _ Bb1 _ _ Ab1 F1 _ Db2 _ Bb2 _ Ab2 _ F2 _ Db2 _' },
+      { name: 'C# black ice',   len: 32, load: 'Db2 _ _ Db2 E2 _ Ab2 _ _ B1 _ Db2 _ Ab1 B1 _ Db2 _ E2 _ Ab2 _ _ B2 _ Db3 _ B2 Ab2 _ E2 _' },
+      { name: 'A minor night',  len: 32, load: 'A1 _ A2 _ C2 _ E2 _ G2 _ _ A2 _ E2 _ _ A1 _ _ C2 E2 _ G2 _ _ A2 B2 _ C3 _ E3 _' }
+    ]
+  }
+];
+
 /* ── Render ── */
 function renderSeq64() {
   var state = seq64State;
@@ -13888,8 +13978,8 @@ function renderSeq64() {
   }
   html += '</div>';
 
-  /* ── Bottom row: Asignar Notas (left) + Step Editor (right) ── */
-  html += '<div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px;">';
+  /* ── Top pair: Asignar Notas (left) + Frase (right) ── */
+  html += '<div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:10px;">';
 
   /* LEFT: Asignar Notas */
   var nm = state.noteMode;
@@ -13947,7 +14037,9 @@ function renderSeq64() {
   html += '</div>';
   html += '<div style="font-size:8px;color:var(--muted);line-height:1.5;margin-top:5px;">Clic para previsualizar · Seleccionar para filtrar</div>';
 
-  /* Frase generator — inside Asignar Notas box, inherits same root/scale/chord */
+  html += '</div>'; /* close s64-scale-box (Asignar Notas) */
+
+  /* RIGHT: Frase generator */
   (function() {
     var pLen = state._phraseLen || 4;
     var pDir = state._phraseDir || 'up';
@@ -13956,31 +14048,32 @@ function renderSeq64() {
       var on = pDir === dir;
       return '<button id="' + id + '" style="flex:1;border:1px solid ' + (on ? 'var(--gold)' : 'rgba(255,176,0,.25)') + ';background:' + (on ? 'rgba(255,176,0,.15)' : 'none') + ';color:' + (on ? 'var(--gold)' : 'var(--muted)') + ';font:' + (on ? '700 ' : '') + '10px \'IBM Plex Mono\',monospace;padding:2px 0;cursor:pointer;">' + label + '</button>';
     };
-    html += '<div style="border-top:1px solid rgba(255,176,0,.15);margin-top:8px;padding-top:7px;">';
+    html += '<div class="s64-scale-box" style="flex:1;min-width:0;margin-bottom:0;">';
+    html += '<div class="s64-scale-title">✦ Frase</div>';
     html += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">';
-    html += '<span style="font:700 8px \'IBM Plex Mono\',monospace;color:rgba(255,176,0,.65);letter-spacing:.06em;">FRASE</span>';
     html += '<input type="range" id="s64PhraseLen" min="2" max="16" value="' + pLen + '" style="flex:1;accent-color:var(--gold);">';
-    html += '<span id="s64PhraseLenVal" style="font:700 10px \'IBM Plex Mono\',monospace;color:var(--gold);min-width:18px;text-align:right;">' + pLen + ' steps</span>';
+    html += '<span id="s64PhraseLenVal" style="font:700 10px \'IBM Plex Mono\',monospace;color:var(--gold);min-width:42px;text-align:right;">' + pLen + ' steps</span>';
     html += '</div>';
-    html += '<div style="display:flex;gap:3px;margin-bottom:5px;">';
+    html += '<div style="display:flex;gap:3px;margin-bottom:6px;">';
     html += dirBtn('s64PhraseDirUp',  'up',     '↑');
     html += dirBtn('s64PhraseDirDn',  'down',   '↓');
     html += dirBtn('s64PhraseDirUd',  'updown', '↑↓');
     html += dirBtn('s64PhraseDirRnd', 'random', '⤭');
     html += '</div>';
-    html += '<div id="s64PhrasePreview" draggable="true" title="Arrastra sobre un step para insertar la frase" style="display:flex;flex-wrap:wrap;gap:3px;padding:5px 6px;border:1px dashed rgba(255,176,0,.35);cursor:grab;min-height:26px;background:rgba(255,176,0,.03);">';
+    html += '<div id="s64PhrasePreview" draggable="true" title="Arrastra sobre un step para insertar la frase" style="display:flex;flex-wrap:wrap;gap:3px;padding:6px;border:1px dashed rgba(255,176,0,.35);cursor:grab;min-height:30px;background:rgba(255,176,0,.03);">';
     phrase.forEach(function(st) {
       html += '<span style="background:rgba(255,176,0,.15);color:var(--gold);border:1px solid rgba(255,176,0,.3);font:700 8px \'IBM Plex Mono\',monospace;padding:2px 4px;">' + s64MidiToName(st.note) + '</span>';
     });
     html += '</div>';
-    html += '<div style="font-size:8px;color:var(--muted);margin-top:4px;">Arrastrá ↓ cuadrícula · suelta en el step inicial</div>';
+    html += '<div style="font-size:8px;color:var(--muted);margin-top:5px;">Arrastrá ↓ cuadrícula · suelta en el step inicial</div>';
     html += '</div>';
   })();
 
-  html += '</div>'; /* close s64-scale-box (Asignar Notas) */
+  html += '</div>'; /* end top pair row (Asignar Notas + Frase) */
 
-  /* RIGHT: Step Editor (always visible) */
-  html += '<div class="s64-editor" style="flex:1;min-width:0;margin-bottom:0;">';
+  /* FULL WIDTH: Step Editor */
+  html += '<div style="margin-bottom:16px;">';
+  html += '<div class="s64-editor" style="width:100%;box-sizing:border-box;">';
   if (state.selectedStep !== null && state.selectedStep.seqIdx === state.activeSEQ) {
     var si2 = state.selectedStep.stepIdx;
     var step2 = seq.steps[si2];
@@ -14050,9 +14143,38 @@ function renderSeq64() {
     html += '<div class="s64-editor-title"><span>STEP · EDITOR</span></div>';
     html += '<div style="color:var(--muted);font-size:11px;font-family:\'IBM Plex Mono\',monospace;padding:28px 0;text-align:center;opacity:.5;">Hacé clic en un step<br>o arrastrá para<br>seleccionar varios</div>';
   }
-  html += '</div>';
+  html += '</div>'; /* close s64-editor */
+  html += '</div>'; /* close step editor wrapper */
 
-  html += '</div>'; /* end bottom flex row */
+  /* ── Biblioteca de ejemplos ── */
+  html += '<div style="margin-bottom:16px;">';
+  html += '<div style="font:700 9px \'IBM Plex Mono\',monospace;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid rgba(255,176,0,.18);padding-bottom:6px;margin-bottom:10px;">BIBLIOTECA · EJEMPLOS KEYSTEP</div>';
+  S64_BIBLIOTECA.forEach(function(pack) {
+    html += '<div class="s64-bib-pack" data-bib-id="' + pack.id + '" style="margin-bottom:6px;border:1px solid rgba(255,176,0,.12);background:rgba(255,176,0,.02);">';
+    html += '<div class="s64-bib-header" data-bib-toggle="' + pack.id + '" style="display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;user-select:none;">';
+    html += '<span style="font:700 10px \'IBM Plex Mono\',monospace;color:var(--gold);flex:1;">' + pack.title + '</span>';
+    html += '<span style="font:400 9px \'IBM Plex Mono\',monospace;color:var(--muted);">8 SEQ</span>';
+    html += '<span class="s64-bib-arrow" style="font-size:9px;color:var(--muted);transition:transform .15s;">▼</span>';
+    html += '</div>';
+    html += '<div class="s64-bib-body" hidden style="padding:0 8px 8px;">';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">';
+    pack.seqs.forEach(function(seq, idx) {
+      var previewNotes = seq.load.split(' ').filter(function(t){ return t !== '_'; }).slice(0, 8).join(' ');
+      html += '<div style="background:rgba(255,176,0,.04);border:1px solid rgba(255,176,0,.1);padding:5px 7px;">';
+      html += '<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">';
+      html += '<span style="font:700 8px \'IBM Plex Mono\',monospace;color:rgba(255,176,0,.45);white-space:nowrap;">SEQ ' + (idx + 1) + '</span>';
+      html += '<span style="font:600 9px \'IBM Plex Mono\',monospace;color:var(--gold);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + seq.name + '</span>';
+      html += '<span style="font:400 8px \'IBM Plex Mono\',monospace;color:var(--muted);white-space:nowrap;">' + seq.len + ' st</span>';
+      html += '</div>';
+      html += '<div style="font:400 8px \'IBM Plex Mono\',monospace;color:var(--muted);margin-bottom:5px;letter-spacing:.02em;">' + previewNotes + '…</div>';
+      html += '<button data-bib-load="' + pack.id + '" data-bib-seq="' + idx + '" style="width:100%;border:1px solid rgba(255,176,0,.3);background:rgba(255,176,0,.08);color:var(--gold);font:700 8px \'IBM Plex Mono\',monospace;padding:3px 0;cursor:pointer;letter-spacing:.08em;">CARGAR →</button>';
+      html += '</div>';
+    });
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
 
   html += '<div class="s64-proj-box">';
   html += '<div class="s64-proj-title">PROYECTO · 64 SEQ</div>';
@@ -14873,6 +14995,72 @@ function s64BindEvents() {
   if (midiBtn) midiBtn.addEventListener('click', s64ExportMidi);
   if (ksBtn)   ksBtn.addEventListener('click', exportKeyStepFrom64Seq);
   if (testBtn) testBtn.addEventListener('click', s64ExportTestReport);
+
+  /* Biblioteca accordion */
+  document.querySelectorAll('[data-bib-toggle]').forEach(function(hdr) {
+    hdr.addEventListener('click', function() {
+      var pack = this.closest('.s64-bib-pack');
+      var body = pack.querySelector('.s64-bib-body');
+      var arrow = pack.querySelector('.s64-bib-arrow');
+      var open = !body.hidden;
+      body.hidden = open;
+      if (arrow) arrow.style.transform = open ? '' : 'rotate(180deg)';
+    });
+  });
+
+  /* Biblioteca CARGAR */
+  document.querySelectorAll('[data-bib-load]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var packId = this.dataset.bibLoad;
+      var seqIdx = parseInt(this.dataset.bibSeq);
+      var pack = S64_BIBLIOTECA.find(function(p){ return p.id === packId; });
+      if (!pack) return;
+      var bibSeq = pack.seqs[seqIdx];
+      if (!bibSeq) return;
+      s64LoadBibSeq(bibSeq, this);
+    });
+  });
+}
+
+function s64LoadBibSeq(bibSeq, btn) {
+  var state = seq64State;
+  var seq = state.seqs[state.activeSEQ];
+  var tokens = bibSeq.load.split(' ');
+  var len = Math.min(bibSeq.len, 64);
+  seq.length = len;
+  for (var i = 0; i < 64; i++) {
+    seq.steps[i] = { active: false, note: 60, velocity: 100, accent: false, ghost: false, tie: false };
+  }
+  for (var i = 0; i < tokens.length && i < len; i++) {
+    var tok = tokens[i];
+    if (!tok || tok === '_') continue;
+    var midi = s64NameToMidi(tok);
+    if (midi >= 0 && midi <= 127) {
+      seq.steps[i].active = true;
+      seq.steps[i].note = midi;
+      seq.steps[i].velocity = 100;
+    }
+  }
+  state.selectedStep = null;
+  state.multiSel = [];
+  renderSeq64();
+  if (btn) {
+    var orig = btn.textContent;
+    btn.textContent = '✓ CARGADO';
+    btn.style.background = 'rgba(0,200,100,.15)';
+    btn.style.borderColor = 'rgba(0,200,100,.5)';
+    btn.style.color = 'rgba(0,200,100,.9)';
+    setTimeout(function() {
+      var el = document.querySelector('[data-bib-load="' + btn.dataset.bibLoad + '"][data-bib-seq="' + btn.dataset.bibSeq + '"]');
+      if (el) {
+        el.textContent = orig;
+        el.style.background = '';
+        el.style.borderColor = '';
+        el.style.color = '';
+      }
+    }, 1500);
+  }
 }
 
 /* ── Test Report ── */
