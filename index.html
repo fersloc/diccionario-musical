@@ -9918,12 +9918,33 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             renderR2Melodias();
           }
 
+          function r2ResizeMel(mi, newLen) {
+            var mel = r2State.melodias[mi]; if (!mel) return;
+            var cur = mel.steps ? mel.steps.length : 16;
+            if (newLen === cur) return;
+            if (newLen > cur) {
+              var add = newLen - cur;
+              mel.steps  = mel.steps.concat(new Array(add).fill(0));
+              mel.notes  = (mel.notes  || new Array(cur).fill('C4')).concat(new Array(add).fill('C4'));
+              mel.chords = (mel.chords || new Array(cur).fill(null)).concat(new Array(add).fill(null));
+            } else {
+              mel.steps  = mel.steps.slice(0, newLen);
+              mel.notes  = (mel.notes  || []).slice(0, newLen);
+              mel.chords = (mel.chords || []).slice(0, newLen);
+            }
+          }
+
           function r2ShowMelPopup(btn, mi) {
             var mel = r2State.melodias[mi]; if (!mel) return;
             var isChord = (mel.mode||'chord') === 'chord';
             var isRnd = !!mel.randPlay;
             var sndOpts = r2BuildSoundOptgroups(mel.sound || 'sine');
             var transposeStyle = 'flex:1;text-align:center;font:700 11px \'IBM Plex Mono\',monospace;padding:3px 0;border:1px solid rgba(0,200,100,.3);background:none;color:rgba(0,200,100,.8);cursor:pointer;';
+            var curLen = mel.steps ? mel.steps.length : 16;
+            var stepBtns = [16,32,64].map(function(n) {
+              var on = curLen === n;
+              return '<button class="r2-mel-mode-btn'+(on?' r2-mel-mode-active':'')+'" id="r2mLen'+n+'_'+mi+'" data-mel-len="'+n+'">'+n+'</button>';
+            }).join('');
             var p = r2MakePopup(btn,
               '<label>VOL</label>' +
               '<div class="r2-pop-row">' +
@@ -9943,6 +9964,8 @@ body:not(.day-mode) .music-controls .btn.icon:hover
               '</div>' +
               '<label>SONIDO</label>' +
               '<select id="r2mSnd'+mi+'">' + sndOpts + '</select>' +
+              '<label>STEPS <span style="font-weight:400;color:rgba(0,200,100,.5);">'+curLen+' de 64</span></label>' +
+              '<div class="r2-pop-row">' + stepBtns + '</div>' +
               '<div class="r2-pop-row" style="margin-top:2px;">' +
                 '<button class="r2-mel-mode-btn" id="r2mDel'+mi+'" style="flex:1;text-align:center;border-color:rgba(255,80,80,.3);color:rgba(255,80,80,.6);">Eliminar</button>' +
               '</div>'
@@ -9979,6 +10002,14 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             });
             p.querySelector('#r2mSnd'+mi).addEventListener('change', function() {
               mel.sound = this.value;
+            });
+            p.querySelectorAll('[data-mel-len]').forEach(function(b) {
+              b.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var newLen = parseInt(this.dataset.melLen);
+                r2ResizeMel(mi, newLen);
+                r2HidePopup(); r2CloseChordPicker(); renderR2Melodias();
+              });
             });
             p.querySelector('#r2mDel'+mi).addEventListener('click', function(e) {
               e.stopPropagation();
