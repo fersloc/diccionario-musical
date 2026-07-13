@@ -6067,7 +6067,7 @@ body:not(.day-mode) .music-controls .btn.icon:hover
         <button class="btn" data-nav-view="ritmos" style="display:none">Ritmos</button>
         <button class="btn" data-nav-view="ritmos2">Ritmo</button>
         <button class="btn" data-nav-view="conceptos">Conceptos</button>
-        <button class="btn" data-nav-view="seq64">64 SEQ</button>
+        <button class="btn" data-nav-view="seq64">64S</button>
         <button class="btn" data-nav-view="soundlab">Sound Lab</button>
       </nav>
       <button id="mobileMenuBtn" aria-label="Abrir menú" title="Menú"><span></span><span></span><span></span></button>
@@ -6086,7 +6086,7 @@ body:not(.day-mode) .music-controls .btn.icon:hover
         <button class="btn" data-nav-view="progressions">Progresiones</button>
         <button class="btn" data-nav-view="ritmos2">Ritmo</button>
         <button class="btn" data-nav-view="conceptos">Conceptos</button>
-        <button class="btn" data-nav-view="seq64">64 SEQ</button>
+        <button class="btn" data-nav-view="seq64">64S</button>
         <button class="btn" data-nav-view="soundlab">Sound Lab</button>
       </nav>
     </aside>
@@ -7302,6 +7302,15 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             color: rgba(18,18,18,.85); pointer-events:none;
             font-family: 'IBM Plex Mono', monospace; line-height:1;
           }
+          /* Voice clips section */
+          .r2-voice-timeline { position:relative; height:44px; background:rgba(0,180,255,.04); border:1px solid rgba(0,180,255,.15); border-radius:3px; overflow:hidden; margin-bottom:10px; cursor:pointer; }
+          .r2-voice-tick { position:absolute; top:0; bottom:0; width:1px; background:rgba(0,180,255,.1); pointer-events:none; }
+          .r2-voice-clip-bar { position:absolute; top:6px; bottom:6px; background:rgba(0,180,255,.22); border:1px solid rgba(0,180,255,.5); border-radius:3px; font:700 8px 'IBM Plex Mono',monospace; color:rgba(0,180,255,.9); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:2px 5px; pointer-events:none; }
+          .r2-voice-now-line { position:absolute; top:0; bottom:0; width:2px; background:rgba(255,176,0,.85); pointer-events:none; z-index:10; transition:left .05s linear; }
+          .r2-voice-clip-row { display:flex; align-items:center; gap:7px; padding:5px 0; border-bottom:1px solid rgba(0,180,255,.1); flex-wrap:wrap; }
+          .r2-voice-clip-name { font:700 9px 'IBM Plex Mono',monospace; color:rgba(0,180,255,.9); flex:1; min-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+          .r2-voice-del { background:none; border:1px solid rgba(255,80,60,.35); color:rgba(255,80,60,.7); font:700 8px 'IBM Plex Mono',monospace; padding:2px 7px; cursor:pointer; border-radius:2px; }
+          .r2-voice-del:hover { background:rgba(255,80,60,.12); }
           .r2-prob-bar:not(.r2-hi)::after { color: rgba(255,176,0,.7); top:auto; bottom:calc(100% + 2px); }
           .r2-prob-bar[data-pct="100"]::after { display:none; }
           .r2-prob-bar[data-pct="0"]::after   { display:none; }
@@ -7406,6 +7415,8 @@ body:not(.day-mode) .music-controls .btn.icon:hover
           .r2-mel-step.r2-on .r2-mel-name { color: #00e87a; font-size:8px; font-weight:700; line-height:1; display:block; text-align:center; }
           .r2-mel-step.r2-now { outline:2px solid rgba(0,220,120,.7) !important; }
           .r2-mel-step.r2-now.r2-on { background: rgba(0,220,120,.35) !important; }
+          .r2-mel-step.r2-editing { outline: 2px solid rgba(255,255,100,.9) !important; background: rgba(255,255,80,.12) !important; z-index:1; }
+          .r2-mel-step.r2-editing .r2-mel-name { color: #ffff50 !important; }
           /* Chord picker */
           #r2ChordPicker { display:none; font-family:'IBM Plex Mono',monospace; }
           .r2-pk-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
@@ -7667,6 +7678,17 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             <div id="r2EjContainer" style="display:none;margin-top:12px;"></div>
           </div>
 
+          <!-- VOICE · clips desde Sound Lab -->
+          <div class="r2-prob" style="margin-top:10px;">
+            <div class="r2-prob-header" id="r2VoiceToggle" style="cursor:pointer;user-select:none;">
+              <span class="r2-prob-title">VOICE · clips desde Sound Lab</span>
+              <span id="r2VoiceArrow" style="font-size:9px;color:var(--muted);">▶</span>
+            </div>
+            <div id="r2VoiceBody" style="display:none;margin-top:12px;">
+              <div id="r2VoiceContainer"></div>
+            </div>
+          </div>
+
           <!-- Proyecto — guardar / abrir / MIDI -->
           <div class="r2-prob" style="margin-top:10px;">
             <div class="r2-prob-header" id="r2ProjectToggle" style="cursor:pointer;user-select:none;">
@@ -7699,7 +7721,7 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             chains: [], chainMode: false, activeChainIndex: -1,
             melChains: [], melChainMode: false, activeMelChainIndex: -1, activeMelChainIdx: -1,
             swing: 0, humanization: 0, velocity: 0,
-            selectedNote: null, noteRoot: 'C', noteMode: 'scale', noteName: 'ionian', noteOctave: 4,
+            selectedNote: null, noteRoot: 'C', noteMode: 'scale', noteName: 'ionian', noteOctave: 4, editMelStep: null,
             melodias: [
               { label:'MELODÍA 1', steps:new Array(16).fill(0), chords:new Array(16).fill(null), notes:new Array(16).fill('C4'), sound:'sine', mode:'chord', vol:80 }
             ],
@@ -7708,7 +7730,8 @@ body:not(.day-mode) .music-controls .btn.icon:hover
               { label:'SNRE_X2', sound:'snare', vol:80, steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:[100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100], accents:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], notes:new Array(16).fill('C4') },
               { label:'HHAT_CL', sound:'hihat', vol:80, steps:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], probs:[100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100], accents:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], notes:new Array(16).fill('C4') },
               { label:'HHAT_OP', sound:'hihat', vol:80, steps:[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], probs:[100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100], accents:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], notes:new Array(16).fill('C4') }
-            ]
+            ],
+            voiceClips: []
           };
 
           var R2_DRUM_SOUNDS  = ['kick','snare','hihat','clave','clap','tom'];
@@ -7718,6 +7741,60 @@ body:not(.day-mode) .music-controls .btn.icon:hover
           function r2MidiToNote(midi) {
             var roots=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
             return roots[midi%12]+(Math.floor(midi/12)-1);
+          }
+
+          function r2ShiftNote(noteStr, semis) {
+            if (!semis) return noteStr;
+            var pc = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+            var m = (noteStr||'C4').match(/^([A-G]#?)(-?\d+)$/);
+            if (!m) return noteStr;
+            var idx = pc.indexOf(m[1]); if (idx < 0) return noteStr;
+            var total = idx + (parseInt(m[2]) + 1) * 12 + semis;
+            return pc[((total % 12) + 12) % 12] + (Math.floor(total / 12) - 1);
+          }
+
+          function r2SlCategory(preset) {
+            var eng = preset.engine || '';
+            if (['kick','snare','hihat','openhat','clap','tom','clave','cowbell'].indexOf(eng) >= 0) return 'Percusión SL';
+            if (['acid','lead','zap'].indexOf(eng) >= 0) return 'Lead SL';
+            if (['pad','fm','drone'].indexOf(eng) >= 0) return 'Pad SL';
+            if (eng === 'noise') return 'Ruido SL';
+            return 'Sound Lab';
+          }
+
+          function r2BuildSlOptgroups(currentSound) {
+            if (!window.soundLabPresets || !window.soundLabPresets.length) return '';
+            var groups = {}, order = [];
+            window.soundLabPresets.forEach(function(p) {
+              var cat = r2SlCategory(p);
+              if (!groups[cat]) { groups[cat] = []; order.push(cat); }
+              groups[cat].push(p);
+            });
+            var html = '';
+            order.forEach(function(cat) {
+              html += '<optgroup label="'+cat+'">';
+              groups[cat].forEach(function(p) {
+                var val = 'soundlab:'+p.id;
+                html += '<option value="'+val+'"'+(currentSound===val?' selected':'')+'>'+p.name.toUpperCase()+'</option>';
+              });
+              html += '</optgroup>';
+            });
+            return html;
+          }
+
+          function r2BuildSoundOptgroups(currentSound) {
+            var h = '<optgroup label="Percusión">';
+            R2_DRUM_SOUNDS.forEach(function(s) {
+              h += '<option value="'+s+'"'+(currentSound===s?' selected':'')+'>'+s.toUpperCase()+'</option>';
+            });
+            h += '</optgroup>';
+            h += '<optgroup label="Síntesis">';
+            R2_SYNTH_SOUNDS.forEach(function(s) {
+              h += '<option value="'+s+'"'+(currentSound===s?' selected':'')+'>'+s.toUpperCase()+'</option>';
+            });
+            h += '</optgroup>';
+            h += r2BuildSlOptgroups(currentSound);
+            return h;
           }
 
           /* Chord constants */
@@ -7874,9 +7951,8 @@ body:not(.day-mode) .music-controls .btn.icon:hover
                 }
                 stepsHtml += '<div class="'+cls+'" data-ti="'+ti+'" data-si="'+si+'">'+noteLabel+'</div>';
               }
-              var soundOpts = R2_DRUM_SOUNDS.map(function(s){
-                return '<option value="'+s+'"'+(s===track.sound?' selected':'')+'>'+s.toUpperCase()+'</option>';
-              }).join('');
+              var trkSnd = track.sound || 'kick';
+              var soundOpts = r2BuildSoundOptgroups(trkSnd);
               tracksHtml += '<div class="r2-track" data-ti="'+ti+'">'+
                 '<div class="r2-track-label'+(isSel?'':' r2-dim')+'" data-sel="'+ti+'">'+
                   '<div class="r2-track-label-row">'+
@@ -7994,7 +8070,7 @@ body:not(.day-mode) .music-controls .btn.icon:hover
               var snd = 'kick';
               r2State.tracks.push({
                 label: 'TRACK_'+String(r2State.tracks.length+1).padStart(2,'0'),
-                sound: snd, vol: 80,
+                sound: snd, vol: 80, rate: 2,
                 steps: new Array(16).fill(0),
                 probs: new Array(16).fill(100),
                 accents: new Array(16).fill(0),
@@ -8110,13 +8186,17 @@ body:not(.day-mode) .music-controls .btn.icon:hover
               }
             }
 
-            /* Mel Chain: advance to next mel sequence each 16-step cycle */
-            if (r2State.melChainMode && r2State.step > 0 && i === 0) {
+            /* Mel Chain: advance to next mel sequence after the full melody length */
+            var _melCycleLen = Math.max(16, r2State.melodias ? r2State.melodias.reduce(function(m,mel){ return Math.max(m, mel.steps ? mel.steps.length : 16); }, 16) : 16);
+            if (r2State.melChainMode && r2State.step > 0 && r2State.step % _melCycleLen === 0) {
               var nextMelIdx = r2State.activeMelChainIndex + 1;
               if (nextMelIdx >= r2State.melChains.length) {
                 if (r2State.loop) nextMelIdx = 0; else { r2State.melChainMode=false; r2RenderMelChain(); r2Log('CADENA MEL: FIN'); }
               }
               if (r2State.melChainMode) {
+                /* Save any live edits (rate/oct/notes/steps) back to the current slot before advancing */
+                var curSlot = r2State.melChains[r2State.activeMelChainIndex];
+                if (curSlot) curSlot.melodias = r2CopyMelodias(r2State.melodias);
                 r2State.activeMelChainIndex = nextMelIdx;
                 var nextMelSeq = r2State.melChains[nextMelIdx];
                 if (nextMelSeq) {
@@ -8131,29 +8211,52 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             document.querySelectorAll('#r2SeqContainer .r2-steps').forEach(function(row) {
               row.querySelectorAll('.r2-step').forEach(function(s, idx){ s.classList.toggle('r2-now', idx === i); });
             });
-            /* Step highlight — melodías (per-melody step index) */
+            /* Step highlight — melodías (per-melody, rate-aware step index) */
             document.querySelectorAll('#r2MelContainer .r2-mel-steps').forEach(function(row) {
               var mIdx = parseInt(row.dataset.mi);
               var mel = r2State.melodias && r2State.melodias[mIdx];
-              var melStep = mel ? r2State.step % mel.steps.length : i;
+              var melStep = mel ? Math.floor(r2State.step * ((mel.rate||2)/2)) % mel.steps.length : i;
               row.querySelectorAll('.r2-mel-step').forEach(function(s, idx){ s.classList.toggle('r2-now', idx === melStep); });
             });
 
-            /* Fire hits — drums */
+            /* Fire hits — drums (with per-track rate) */
             r2State.tracks.forEach(function(track) {
-              var fireAt = (track.randPlay && track._rndSet) ? track._rndSet[i] : track.steps[i];
-              if (!fireAt) return;
-              var prob = track.probs[i] !== undefined ? track.probs[i] : 100;
-              if (prob < 100 && Math.random() * 100 >= prob) return;
-              var gain = (track.vol !== undefined ? track.vol : 80) / 100;
-              var isAccent = !!(track.accents && track.accents[i]);
-              if (R2_MELODIC[track.sound]) {
-                var note = (track.notes && track.notes[i]) ? track.notes[i] : 'C4';
-                if (isAccent) r2PlayNoteAccented(note, track.sound, q * 0.65, gain, r2GetAccentAmt());
-                else r2PlayNote(note, track.sound, q * 0.65, gain);
-              } else {
-                if (isAccent) { try { r2PlayDrumHitAccented(track.sound, gain, r2GetAccentAmt()); } catch(e2) {} }
-                else { try { playDrumHit(track.sound, gain); } catch(e2) {} }
+              var tRate = track.rate || 2;
+              var tSubSteps = tRate > 2 ? Math.round(tRate / 2) : 1;
+              var tBaseIdx = Math.floor(r2State.step * (tRate / 2)) % 16;
+              var tSubDur = Math.max(30, (q / tSubSteps) * 0.65);
+              for (var _tk = 0; _tk < tSubSteps; _tk++) {
+                (function(ti, delayMs, durMs) {
+                  function fireDrum() {
+                    var fireAt = (track.randPlay && track._rndSet) ? track._rndSet[ti] : track.steps[ti];
+                    if (!fireAt) return;
+                    var prob = track.probs[ti] !== undefined ? track.probs[ti] : 100;
+                    if (prob < 100 && Math.random() * 100 >= prob) return;
+                    var gain = (track.vol !== undefined ? track.vol : 80) / 100;
+                    var isAccent = !!(track.accents && track.accents[ti]);
+                    if (R2_MELODIC[track.sound]) {
+                      var note = (track.notes && track.notes[ti]) ? track.notes[ti] : 'C4';
+                      (function(n, snd, dur, g, accent) {
+                        r2State._lastRepeatFn = function() { r2PlayNote(n, snd, 150, g); };
+                        if (accent) r2PlayNoteAccented(n, snd, dur, g, r2GetAccentAmt());
+                        else r2PlayNote(n, snd, dur, g);
+                      })(note, track.sound, durMs, gain, isAccent);
+                    } else if (track.sound && track.sound.indexOf('soundlab:') === 0) {
+                      (function(slId, tNote, tGain) {
+                        r2State._lastRepeatFn = function() { if (window.playSoundLabPreset) window.playSoundLabPreset(slId, {volume:tGain}); };
+                        if (window.playSoundLabPreset) window.playSoundLabPreset(slId, {note:tNote, volume:tGain});
+                      })(track.sound.slice(9), (track.notes && track.notes[ti]) || 'C4', gain);
+                    } else {
+                      (function(snd, tGain, accent) {
+                        r2State._lastRepeatFn = function() { try { playDrumHit(snd, tGain); } catch(e){} };
+                        if (accent) { try { r2PlayDrumHitAccented(snd, tGain, r2GetAccentAmt()); } catch(e2) {} }
+                        else { try { playDrumHit(snd, tGain); } catch(e2) {} }
+                      })(track.sound, gain, isAccent);
+                    }
+                  }
+                  if (delayMs > 0) r2State.timers.push(setTimeout(fireDrum, delayMs));
+                  else fireDrum();
+                })((tBaseIdx + _tk) % 16, _tk > 0 ? Math.round(_tk * q / tSubSteps) : 0, tSubDur);
               }
             });
 
@@ -8200,29 +8303,73 @@ body:not(.day-mode) .music-controls .btn.icon:hover
 
             /* Fire hits — melodías */
             if (r2State.melodias && r2State.melodias.length) {
-              var melDur = q * 0.82;
-              r2State.melodias.forEach(function(mel) {
-                var mi = r2State.step % mel.steps.length; /* per-melody step index */
+              r2State.melodias.forEach(function(mel, melRowIdx) {
+                var rate = mel.rate || 2;
                 var melGain = (mel.vol !== undefined ? mel.vol : 80) / 100 * 0.3;
                 var snd = mel.sound || 'sine';
-                var content;
-                if (mel.randPlay) {
-                  if (!mel._rndStepMap || !mel._rndStepMap[mi]) return;
-                  content = mel._rndStepMap[mi];
-                } else {
-                  if (!mel.steps[mi]) return;
-                  content = { note: mel.notes ? mel.notes[mi] : 'C4', chord: mel.chords ? mel.chords[mi] : null };
-                }
-                if ((mel.mode||'chord') === 'chord') {
-                  var chord = content.chord; if (!chord) return;
-                  var notes = r2ChordNotes(chord.root, chord.type, chord.oct);
-                  notes.forEach(function(m){ r2PlayNote(r2MidiToNote(m), snd, melDur, melGain); });
-                } else {
-                  var note = content.note || 'C4';
-                  if (note) r2PlayNote(note, snd, melDur, melGain);
+                var semis = (mel.octave||0)*12 + (mel.transpose||0);
+                /* For rates > 1/8 (rate > 2), fire multiple sub-steps per tick via setTimeout */
+                var subSteps = rate > 2 ? Math.round(rate / 2) : 1;
+                var baseIdx = Math.floor(r2State.step * (rate / 2));
+                var subDur = Math.max(30, (q / subSteps) * 0.82);
+                for (var _k = 0; _k < subSteps; _k++) {
+                  (function(mi, delayMs, durMs, rowIdx) {
+                    function updateHL() {
+                      var row = document.querySelector('#r2MelContainer .r2-mel-steps[data-mi="'+rowIdx+'"]');
+                      if (!row) return;
+                      row.querySelectorAll('.r2-mel-step').forEach(function(s, idx){ s.classList.toggle('r2-now', idx === mi); });
+                    }
+                    function fireStep() {
+                      var content;
+                      if (mel.randPlay) {
+                        if (!mel._rndStepMap || !mel._rndStepMap[mi]) return;
+                        content = mel._rndStepMap[mi];
+                      } else {
+                        if (!mel.steps[mi]) return;
+                        content = { note: mel.notes ? mel.notes[mi] : 'C4', chord: mel.chords ? mel.chords[mi] : null };
+                      }
+                      if ((mel.mode||'chord') === 'chord') {
+                        var chord = content.chord; if (!chord) return;
+                        var chordOct = (chord.oct||4) + (mel.octave||0);
+                        var chordNotes = r2ChordNotes(chord.root, chord.type, chordOct);
+                        var shifted = chordNotes.map(function(m){ return m + (mel.transpose||0); });
+                        (function(ns, s, g) {
+                          r2State._lastRepeatFn = function() { ns.forEach(function(m){ r2PlayNote(r2MidiToNote(m), s, 150, g); }); };
+                          ns.forEach(function(m){ r2PlayNote(r2MidiToNote(m), s, durMs, g); });
+                        })(shifted, snd, melGain);
+                      } else if (snd.indexOf('soundlab:') === 0) {
+                        var slId = snd.slice(9);
+                        var shiftedNote = r2ShiftNote(content.note || 'C4', semis);
+                        (function(sid, n, g) {
+                          r2State._lastRepeatFn = function() { if (window.playSoundLabPreset) window.playSoundLabPreset(sid, {note:n, volume:g}); };
+                          if (window.playSoundLabPreset) window.playSoundLabPreset(sid, {note:n, volume:g});
+                        })(slId, shiftedNote, melGain);
+                      } else if (R2_DRUM_SOUNDS.indexOf(snd) >= 0) {
+                        (function(s, g) {
+                          r2State._lastRepeatFn = function() { try { playDrumHit(s, g); } catch(e){} };
+                          try { playDrumHit(s, g); } catch(e) {}
+                        })(snd, melGain);
+                      } else {
+                        var note = r2ShiftNote(content.note || 'C4', semis);
+                        (function(n, s, g) {
+                          r2State._lastRepeatFn = function() { r2PlayNote(n, s, 150, g); };
+                          r2PlayNote(n, s, durMs, g);
+                        })(note, snd, melGain);
+                      }
+                    }
+                    if (delayMs > 0) r2State.timers.push(setTimeout(function(){ fireStep(); updateHL(); }, delayMs));
+                    else fireStep();
+                  })((baseIdx + _k) % mel.steps.length, _k > 0 ? Math.round(_k * q / subSteps) : 0, subDur, melRowIdx);
                 }
               });
             }
+
+            /* Voice clips — fire at startStep */
+            (r2State.voiceClips || []).forEach(function(clip) {
+              if ((r2State.step % 64) === clip.startStep && clip.presetId && window.playSoundLabPreset) {
+                window.playSoundLabPreset(clip.presetId, {volume: (clip.volume !== undefined ? clip.volume : 80) / 100});
+              }
+            });
 
             r2State.step++;
             var r2MaxLen = Math.max(16, r2State.melodias ? r2State.melodias.reduce(function(m, mel){ return Math.max(m, mel.steps ? mel.steps.length : 16); }, 16) : 16);
@@ -8389,7 +8536,7 @@ body:not(.day-mode) .music-controls .btn.icon:hover
 
           function r2CopyTracks(tracks) {
             return tracks.map(function(t) {
-              return { label:t.label, sound:t.sound, vol:t.vol!==undefined?t.vol:80, randPlay:!!t.randPlay, steps:t.steps.slice(), probs:t.probs.slice(), accents:t.accents.slice(), notes:(t.notes||new Array(16).fill('C4')).slice() };
+              return { label:t.label, sound:t.sound, vol:t.vol!==undefined?t.vol:80, rate:t.rate||2, randPlay:!!t.randPlay, steps:t.steps.slice(), probs:t.probs.slice(), accents:t.accents.slice(), notes:(t.notes||new Array(16).fill('C4')).slice() };
             });
           }
 
@@ -8561,15 +8708,32 @@ body:not(.day-mode) .music-controls .btn.icon:hover
           /* ── Cadena de Melodías ── */
           function r2CopyMelodias(mels) {
             return mels.map(function(m) {
+              var len = m.steps ? m.steps.length : 16;
               return {
                 label: m.label, sound: m.sound||'sine',
                 vol: m.vol!==undefined?m.vol:80, randPlay:!!m.randPlay,
                 mode: m.mode||'note',
+                rate: m.rate||2, octave: m.octave||0, transpose: m.transpose||0,
                 steps: m.steps.slice(),
-                notes: (m.notes||new Array(16).fill('C4')).slice(),
-                chords: (m.chords||new Array(16).fill(null)).slice()
+                notes: (m.notes||new Array(len).fill('C4')).slice(),
+                /* Deep-copy chord objects so edits don't bleed across chain slots */
+                chords: (m.chords||new Array(len).fill(null)).map(function(ch) {
+                  return ch ? {root:ch.root, type:ch.type, oct:ch.oct, name:ch.name} : null;
+                })
               };
             });
+          }
+
+          /* Escribe rate/octave/transpose de vuelta al slot activo de la cadena mel */
+          function r2WriteBackChainSlot(mi) {
+            var idx = r2State.activeMelChainIndex;
+            if (!r2State.melChainMode || idx < 0) return;
+            var slot = r2State.melChains[idx];
+            if (!slot || !slot.melodias || !slot.melodias[mi]) return;
+            var src = r2State.melodias[mi]; if (!src) return;
+            slot.melodias[mi].rate      = src.rate      || 2;
+            slot.melodias[mi].octave    = src.octave    || 0;
+            slot.melodias[mi].transpose = src.transpose || 0;
           }
 
           /* Transpone todas las melodías de una entrada de la cadena */
@@ -8802,7 +8966,8 @@ body:not(.day-mode) .music-controls .btn.icon:hover
                 r2State.melodias = r2CopyMelodias(seq.melodias);
                 renderR2Melodias();
                 var bpm = parseInt(document.getElementById('r2BpmInput').value) || 120;
-                var cycleDur = (60000 / bpm / 2) * 16 + 200;
+                var maxMelLen = r2State.melodias.reduce(function(m,mel){ return Math.max(m, mel.steps ? mel.steps.length : 16); }, 16);
+                var cycleDur = (60000 / bpm / 2) * maxMelLen + 200;
                 audioEngine.ensure().then(function() {
                   r2Play();
                   r2State.timers.push(setTimeout(function() {
@@ -8857,6 +9022,83 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             });
           }
 
+          /* ──── VOICE CLIPS ──── */
+          function renderR2VoiceSection() {
+            var con = document.getElementById('r2VoiceContainer');
+            if (!con) return;
+            var clips = r2State.voiceClips || [];
+            var STEPS = 64;
+            var bpmEl = document.getElementById('r2BpmInput');
+            var bpm = bpmEl ? (parseInt(bpmEl.value) || 120) : 120;
+
+            /* Timeline */
+            var tl = '<div class="r2-voice-timeline" id="r2VoiceTimeline">';
+            /* Tick marks every 8 steps */
+            for (var t = 0; t < STEPS; t += 8) {
+              var pct = (t / STEPS * 100).toFixed(2);
+              tl += '<div class="r2-voice-tick" style="left:'+pct+'%;"></div>';
+              tl += '<div style="position:absolute;top:2px;left:calc('+pct+'% + 2px);font:700 7px \'IBM Plex Mono\',monospace;color:rgba(0,180,255,.4);pointer-events:none;">'+t+'</div>';
+            }
+            /* Clip bars */
+            clips.forEach(function(clip, ci) {
+              var l = (clip.startStep / STEPS * 100).toFixed(2);
+              var w = Math.min((clip.lengthSteps / STEPS * 100), 100 - clip.startStep / STEPS * 100).toFixed(2);
+              tl += '<div class="r2-voice-clip-bar" style="left:'+l+'%;width:'+w+'%;" title="'+clip.name+'">'+clip.name+'</div>';
+            });
+            /* Playhead */
+            if (r2State.playing) {
+              var ph = ((r2State.step % STEPS) / STEPS * 100).toFixed(2);
+              tl += '<div class="r2-voice-now-line" style="left:'+ph+'%;"></div>';
+            }
+            tl += '</div>';
+
+            /* Clip list */
+            var list = '';
+            if (clips.length === 0) {
+              list = '<div style="font:400 9px \'IBM Plex Mono\',monospace;color:var(--muted);padding:6px 0;">Sin clips. Usa → VOICE en Sound Lab para agregar.</div>';
+            } else {
+              clips.forEach(function(clip, ci) {
+                var vol = clip.volume !== undefined ? clip.volume : 80;
+                var stepMs = Math.round((60 / bpm / 2) * clip.lengthSteps * 10) / 10;
+                list += '<div class="r2-voice-clip-row">';
+                list += '<span class="r2-voice-clip-name" title="'+clip.name+'">'+clip.name+'</span>';
+                list += '<label style="font:400 8px \'IBM Plex Mono\',monospace;color:var(--muted);">inicio&nbsp;';
+                list += '<input type="number" min="0" max="63" value="'+clip.startStep+'" data-vc-start="'+ci+'" style="width:36px;background:none;border:1px solid rgba(0,180,255,.3);color:rgba(0,180,255,.9);font:9px \'IBM Plex Mono\',monospace;padding:2px 4px;"></label>';
+                list += '<label style="font:400 8px \'IBM Plex Mono\',monospace;color:var(--muted);">dur&nbsp;';
+                list += '<input type="number" min="1" max="64" value="'+clip.lengthSteps+'" data-vc-len="'+ci+'" style="width:36px;background:none;border:1px solid rgba(0,180,255,.3);color:rgba(0,180,255,.9);font:9px \'IBM Plex Mono\',monospace;padding:2px 4px;"></label>';
+                list += '<label style="font:400 8px \'IBM Plex Mono\',monospace;color:var(--muted);">vol&nbsp;';
+                list += '<input type="range" min="0" max="100" value="'+vol+'" data-vc-vol="'+ci+'" style="width:55px;accent-color:rgba(0,180,255,.8);vertical-align:middle;"></label>';
+                list += '<span style="font:700 8px \'IBM Plex Mono\',monospace;color:rgba(0,180,255,.5);">'+vol+'</span>';
+                list += '<button class="r2-voice-del" data-vc-del="'+ci+'" title="Eliminar clip">✕</button>';
+                list += '</div>';
+              });
+            }
+
+            con.innerHTML = tl + list;
+
+            /* Delegate events */
+            con.addEventListener('change', function(e) {
+              var si = e.target.dataset.vcStart;
+              var li = e.target.dataset.vcLen;
+              var vi = e.target.dataset.vcVol;
+              if (si !== undefined) { r2State.voiceClips[+si].startStep = Math.max(0, Math.min(63, parseInt(e.target.value)||0)); renderR2VoiceSection(); }
+              if (li !== undefined) { r2State.voiceClips[+li].lengthSteps = Math.max(1, Math.min(64, parseInt(e.target.value)||1)); renderR2VoiceSection(); }
+            });
+            con.addEventListener('input', function(e) {
+              var vi = e.target.dataset.vcVol;
+              if (vi !== undefined) {
+                var v = parseInt(e.target.value)||80;
+                r2State.voiceClips[+vi].volume = v;
+                var span = e.target.nextElementSibling;
+                if (span) span.textContent = v;
+              }
+            });
+            con.addEventListener('click', function(e) {
+              var di = e.target.dataset.vcDel;
+              if (di !== undefined) { r2State.voiceClips.splice(+di, 1); renderR2VoiceSection(); }
+            });
+          }
+
           /* ──── MELODÍAS ──── */
           function renderR2Melodias() {
             var con = document.getElementById('r2MelContainer');
@@ -8883,18 +9125,37 @@ body:not(.day-mode) .music-controls .btn.icon:hover
                   }
                 }
                 var dropHint = (!isChord) ? ' r2-mel-droppable' : '';
-                stepsHtml += '<div class="r2-mel-step r2-step'+(on?' r2-on':'')+dropHint+'" data-mi="'+mi+'" data-si="'+si+'">'+inner+'</div>';
+                var isEditing = r2State.editMelStep && r2State.editMelStep.mi===mi && r2State.editMelStep.si===si;
+                stepsHtml += '<div class="r2-mel-step r2-step'+(on?' r2-on':'')+(isEditing?' r2-editing':'')+dropHint+'" data-mi="'+mi+'" data-si="'+si+'">'+inner+'</div>';
               }
-              var isChordMode = (mel.mode||'chord') === 'chord';
-              var soundOpts = R2_SYNTH_SOUNDS.map(function(s){
-                return '<option value="'+s+'"'+((mel.sound||'sine')===s?' selected':'')+'>'+s.toUpperCase()+'</option>';
+              var melSnd = mel.sound || 'sine';
+              var soundOpts = r2BuildSoundOptgroups(melSnd);
+              var oct = mel.octave || 0;
+              var trans = mel.transpose || 0;
+              var rate = mel.rate || 2;
+              var rateLabels = {1:'1/4',2:'1/8',4:'1/16',8:'1/32'};
+              var rateHtml = [1,2,4,8].map(function(rv){
+                var on = rate === rv;
+                return '<button class="r2-mel-rate-btn" data-mel-rate="'+mi+'" data-rate="'+rv+'" style="border:1px solid '+(on?'rgba(0,200,100,.8)':'rgba(0,200,100,.25)')+';background:'+(on?'rgba(0,200,100,.15)':'none')+';color:'+(on?'rgba(0,200,100,1)':'rgba(0,200,100,.4)')+';font:700 8px \'IBM Plex Mono\',monospace;padding:1px 3px;cursor:pointer;line-height:1.4;">'+rateLabels[rv]+'</button>';
               }).join('');
               return '<div class="r2-track r2-mel-track">'+
-                '<div class="r2-track-label r2-mel-label">'+
+                '<div class="r2-track-label r2-mel-label" style="height:auto;min-height:52px;">'+
                   '<div class="r2-track-label-row">'+
                     '<select class="r2-mel-snd" data-mel-snd="'+mi+'" style="flex:1;min-width:0;background:none;border:none;color:rgba(0,200,100,.8);font:700 9px \'IBM Plex Mono\',monospace;text-transform:uppercase;outline:none;cursor:pointer;padding:0;">'+soundOpts+'</select>'+
                     '<button class="r2-opts-btn" data-mel-opts="'+mi+'" style="border-color:rgba(0,200,100,.3);color:rgba(0,200,100,.6);" title="Opciones">···</button>'+
                   '</div>'+
+                  '<div style="display:flex;gap:2px;margin-top:2px;align-items:center;">'+
+                    '<span style="font:700 8px IBM Plex Mono,monospace;color:rgba(0,200,100,.85);letter-spacing:.04em;">O</span>'+
+                    '<button class="r2-mel-oct-btn" data-mel-oct="'+mi+'" data-delta="-1" style="border:1px solid rgba(0,200,100,.3);background:none;color:rgba(0,200,100,.8);font:700 10px monospace;width:16px;height:16px;cursor:pointer;line-height:1;padding:0;">−</button>'+
+                    '<span class="r2-mel-oct-disp" data-mel-oct-disp="'+mi+'" style="font:700 8px IBM Plex Mono,monospace;color:rgba(0,200,100,.9);min-width:14px;text-align:center;">'+oct+'</span>'+
+                    '<button class="r2-mel-oct-btn" data-mel-oct="'+mi+'" data-delta="1" style="border:1px solid rgba(0,200,100,.3);background:none;color:rgba(0,200,100,.8);font:700 10px monospace;width:16px;height:16px;cursor:pointer;line-height:1;padding:0;">+</button>'+
+                    '<span style="color:rgba(0,200,100,.2);margin:0 2px;">|</span>'+
+                    '<span style="font:700 8px IBM Plex Mono,monospace;color:rgba(0,200,100,.85);letter-spacing:.04em;">T</span>'+
+                    '<button class="r2-mel-st-btn" data-mel-st="'+mi+'" data-delta="-1" style="border:1px solid rgba(0,200,100,.3);background:none;color:rgba(0,200,100,.8);font:700 10px monospace;width:16px;height:16px;cursor:pointer;line-height:1;padding:0;">−</button>'+
+                    '<span class="r2-mel-st-disp" data-mel-st-disp="'+mi+'" style="font:700 8px IBM Plex Mono,monospace;color:rgba(0,200,100,.9);min-width:18px;text-align:center;">'+(trans>0?'+':'')+trans+'</span>'+
+                    '<button class="r2-mel-st-btn" data-mel-st="'+mi+'" data-delta="1" style="border:1px solid rgba(0,200,100,.3);background:none;color:rgba(0,200,100,.8);font:700 10px monospace;width:16px;height:16px;cursor:pointer;line-height:1;padding:0;">+</button>'+
+                  '</div>'+
+                  '<div style="display:flex;gap:2px;margin-top:2px;">'+rateHtml+'</div>'+
                 '</div>'+
                 '<div class="r2-steps r2-mel-steps" data-mi="'+mi+'">'+stepsHtml+'</div>'+
               '</div>';
@@ -8916,7 +9177,7 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             var addBtn = con.querySelector('#r2MelAddBtn');
             if (addBtn) addBtn.addEventListener('click', function() {
               var n = r2State.melodias.length + 1;
-              r2State.melodias.push({ label:'MELODÍA '+n, steps:new Array(16).fill(0), chords:new Array(16).fill(null), notes:new Array(16).fill('C4'), sound:'sine', mode:'chord', vol:80 });
+              r2State.melodias.push({ label:'MELODÍA '+n, steps:new Array(16).fill(0), chords:new Array(16).fill(null), notes:new Array(16).fill('C4'), sound:'sine', mode:'note', vol:80 });
               renderR2Melodias(); r2Log('+ MELODÍA '+n);
             });
 
@@ -8934,6 +9195,47 @@ body:not(.day-mode) .music-controls .btn.icon:hover
               btn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 r2ShowMelPopup(this, parseInt(this.dataset.melOpts));
+              });
+            });
+
+            /* Bind: OCT +/- */
+            con.querySelectorAll('.r2-mel-oct-btn').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                var mi = parseInt(this.dataset.melOct);
+                var mel = r2State.melodias[mi]; if (!mel) return;
+                mel.octave = Math.max(-4, Math.min(4, (mel.octave||0) + parseInt(this.dataset.delta)));
+                var disp = con.querySelector('[data-mel-oct-disp="'+mi+'"]');
+                if (disp) disp.textContent = mel.octave;
+                r2WriteBackChainSlot(mi);
+              });
+            });
+
+            /* Bind: ST +/- */
+            con.querySelectorAll('.r2-mel-st-btn').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                var mi = parseInt(this.dataset.melSt);
+                var mel = r2State.melodias[mi]; if (!mel) return;
+                mel.transpose = Math.max(-12, Math.min(12, (mel.transpose||0) + parseInt(this.dataset.delta)));
+                var disp = con.querySelector('[data-mel-st-disp="'+mi+'"]');
+                if (disp) disp.textContent = (mel.transpose > 0 ? '+' : '') + mel.transpose;
+                r2WriteBackChainSlot(mi);
+              });
+            });
+
+            /* Bind: RATE buttons */
+            con.querySelectorAll('.r2-mel-rate-btn').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                var mi = parseInt(this.dataset.melRate);
+                var rv = parseInt(this.dataset.rate);
+                var mel = r2State.melodias[mi]; if (!mel) return;
+                mel.rate = rv;
+                con.querySelectorAll('[data-mel-rate="'+mi+'"]').forEach(function(b) {
+                  var on = parseInt(b.dataset.rate) === rv;
+                  b.style.borderColor = on ? 'rgba(0,200,100,.8)' : 'rgba(0,200,100,.25)';
+                  b.style.background  = on ? 'rgba(0,200,100,.15)' : 'none';
+                  b.style.color       = on ? 'rgba(0,200,100,1)' : 'rgba(0,200,100,.4)';
+                });
+                r2WriteBackChainSlot(mi);
               });
             });
 
@@ -8956,9 +9258,16 @@ body:not(.day-mode) .music-controls .btn.icon:hover
                     if (fresh) r2OpenChordPicker(fresh, mi, si);
                   }
                 } else {
-                  /* Note mode: click toggles on/off */
-                  mel.steps[si] = mel.steps[si] ? 0 : 1;
+                  /* Note mode: click selects for editing; right-click (contextmenu) still toggles off */
+                  var alreadySel = r2State.editMelStep && r2State.editMelStep.mi===mi && r2State.editMelStep.si===si;
+                  if (alreadySel) {
+                    r2State.editMelStep = null;
+                  } else {
+                    if (!mel.steps[si]) mel.steps[si] = 1;
+                    r2State.editMelStep = {mi:mi, si:si};
+                  }
                   renderR2Melodias();
+                  r2RenderNotePills();
                 }
               });
               cell.addEventListener('contextmenu', function(e) {
@@ -9168,6 +9477,18 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             });
           })();
 
+          /* ── VOICE: clips desde Sound Lab ── */
+          (function() {
+            document.getElementById('r2VoiceToggle').addEventListener('click', function() {
+              var body  = document.getElementById('r2VoiceBody');
+              var arrow = document.getElementById('r2VoiceArrow');
+              var show  = body.style.display === 'none';
+              body.style.display = show ? 'block' : 'none';
+              arrow.textContent  = show ? '▲' : '▶';
+              if (show) renderR2VoiceSection();
+            });
+          })();
+
           /* ── PROYECTO: guardar / abrir / exportar MIDI ── */
           (function() {
             /* Toggle */
@@ -9198,7 +9519,8 @@ body:not(.day-mode) .music-controls .btn.icon:hover
                   tracks:    r2CopyTracks(r2State.tracks),
                   melodias:  r2CopyMelodias(r2State.melodias),
                   chains:    r2State.chains.map(function(ch){ return { name:ch.name, tracks:r2CopyTracks(ch.tracks) }; }),
-                  melChains: r2State.melChains.map(function(ch){ return { name:ch.name, melodias:r2CopyMelodias(ch.melodias) }; })
+                  melChains: r2State.melChains.map(function(ch){ return { name:ch.name, melodias:r2CopyMelodias(ch.melodias) }; }),
+                  voiceClips: (r2State.voiceClips || []).slice()
                 }
               };
               var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
@@ -9219,8 +9541,9 @@ body:not(.day-mode) .music-controls .btn.icon:hover
                   r2State.melodias  = r2CopyMelodias(state.melodias || []);
                   r2State.chains    = (state.chains || []).map(function(ch){ return { name:ch.name, tracks:r2CopyTracks(ch.tracks) }; });
                   r2State.melChains = (state.melChains || []).map(function(ch){ return { name:ch.name, melodias:r2CopyMelodias(ch.melodias) }; });
+                  r2State.voiceClips = state.voiceClips || [];
                   r2State.activeMelChainIdx = -1;
-                  r2Stop(); renderR2Grid(); renderR2Melodias(); r2RenderChain(); r2RenderMelChain();
+                  r2Stop(); renderR2Grid(); renderR2Melodias(); r2RenderChain(); r2RenderMelChain(); renderR2VoiceSection();
                   document.getElementById('r2ProjectStatus').textContent = 'Proyecto cargado.';
                 } catch(err) {
                   document.getElementById('r2ProjectStatus').textContent = 'Error: ' + err.message;
@@ -9286,6 +9609,19 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             var pills = document.getElementById('r2NotePills');
             var targetLbl = document.getElementById('r2NoteTarget');
             if (!pills) return;
+            /* Show which step is being edited */
+            var panelTitle = document.querySelector('#r2NotesPanel .r2-panel-title');
+            if (panelTitle) {
+              if (r2State.editMelStep) {
+                var em = r2State.editMelStep;
+                var emMel = r2State.melodias && r2State.melodias[em.mi];
+                var emNote = emMel && emMel.notes ? emMel.notes[em.si] : '?';
+                var emLabel = emMel ? emMel.label || ('Mel. '+(em.mi+1)) : 'Mel.';
+                panelTitle.innerHTML = '♩ Asignar Notas <span style="color:rgba(255,255,80,.9);font-size:9px;">→ '+emLabel+' paso '+(em.si+1)+' ('+emNote+')</span>';
+              } else {
+                panelTitle.textContent = '♩ Asignar Notas';
+              }
+            }
             var root = (document.getElementById('r2NoteRoot') || {}).value || r2State.noteRoot;
             var name = (document.getElementById('r2NoteName') || {}).value || r2State.noteName;
             var mode = r2State.noteMode;
@@ -9321,10 +9657,30 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             }).join('');
 
             pills.querySelectorAll('.r2-note-pill').forEach(function(pill) {
-              /* Click: toggle selección persistente + previsualizar sonido */
+              /* Highlight pill that matches the currently selected step's note */
+              if (r2State.editMelStep) {
+                var em = r2State.editMelStep;
+                var emMel = r2State.melodias[em.mi];
+                if (emMel && emMel.notes && emMel.notes[em.si] === this.dataset.note) {
+                  this.classList.add('r2-selected');
+                }
+              }
+              /* Click: si hay step seleccionado → asigna nota; si no → previsualizar */
               pill.addEventListener('click', function() {
                 try { r2PlayNote(this.dataset.note, 'sine', 280); } catch(ex){}
-                this.classList.toggle('r2-selected');
+                if (r2State.editMelStep) {
+                  var em = r2State.editMelStep;
+                  var emMel = r2State.melodias[em.mi];
+                  if (emMel) {
+                    if (!emMel.notes) emMel.notes = new Array(emMel.steps.length).fill('C4');
+                    emMel.notes[em.si] = this.dataset.note;
+                    emMel.steps[em.si] = 1;
+                    renderR2Melodias();
+                    r2RenderNotePills();
+                  }
+                } else {
+                  this.classList.toggle('r2-selected');
+                }
               });
               /* Drag: solo hacia melodías */
               pill.addEventListener('dragstart', function(e) {
@@ -9475,13 +9831,21 @@ body:not(.day-mode) .music-controls .btn.icon:hover
           function r2ShowTrackPopup(btn, ti) {
             var track = r2State.tracks[ti]; if (!track) return;
             var isRnd = !!track.randPlay;
+            var tRate = track.rate || 2;
+            var rateLabels = {1:'1/4', 2:'1/8', 4:'1/16', 8:'1/32'};
+            var rateBtns = [1,2,4,8].map(function(rv) {
+              var on = tRate === rv;
+              return '<button class="r2-mel-mode-btn r2tRateBtn'+(on?' r2-mel-mode-active':'')+'" data-rv="'+rv+'" style="flex:1;text-align:center;font-size:8px;'+(on?'border-color:var(--gold);color:var(--gold);':'')+'">' + rateLabels[rv] + '</button>';
+            }).join('');
             var p = r2MakePopup(btn,
               '<label>VOL</label>' +
               '<div class="r2-pop-row">' +
                 '<input type="range" id="r2tVol'+ti+'" min="0" max="100" value="'+(track.vol||80)+'" style="flex:1;height:3px;accent-color:var(--gold);">' +
                 '<span id="r2tVolVal'+ti+'" style="font:8px \'IBM Plex Mono\',monospace;color:var(--muted);width:24px;text-align:right;">'+(track.vol||80)+'</span>' +
               '</div>' +
-              '<div class="r2-pop-row">' +
+              '<label style="margin-top:6px;display:block;">RATE</label>' +
+              '<div class="r2-pop-row" style="gap:3px;">' + rateBtns + '</div>' +
+              '<div class="r2-pop-row" style="margin-top:4px;">' +
                 '<button class="r2-mel-mode-btn'+(isRnd?' r2-mel-mode-active':'')+'" id="r2tRnd'+ti+'" style="flex:1;text-align:center;">RND</button>' +
                 '<button class="r2-mel-mode-btn" id="r2tDel'+ti+'" style="flex:1;text-align:center;border-color:rgba(255,80,80,.3);color:rgba(255,80,80,.6);">Eliminar</button>' +
               '</div>'
@@ -9490,6 +9854,18 @@ body:not(.day-mode) .music-controls .btn.icon:hover
               e.stopPropagation();
               track.vol = parseInt(this.value);
               p.querySelector('#r2tVolVal'+ti).textContent = this.value;
+            });
+            p.querySelectorAll('.r2tRateBtn').forEach(function(b) {
+              b.addEventListener('click', function(e) {
+                e.stopPropagation();
+                track.rate = parseInt(this.dataset.rv);
+                p.querySelectorAll('.r2tRateBtn').forEach(function(x) {
+                  var on = parseInt(x.dataset.rv) === track.rate;
+                  x.classList.toggle('r2-mel-mode-active', on);
+                  x.style.borderColor = on ? 'var(--gold)' : '';
+                  x.style.color = on ? 'var(--gold)' : '';
+                });
+              });
             });
             p.querySelector('#r2tRnd'+ti).addEventListener('click', function(e) {
               e.stopPropagation();
@@ -9546,9 +9922,7 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             var mel = r2State.melodias[mi]; if (!mel) return;
             var isChord = (mel.mode||'chord') === 'chord';
             var isRnd = !!mel.randPlay;
-            var sndOpts = R2_SYNTH_SOUNDS.map(function(s){
-              return '<option value="'+s+'"'+(mel.sound===s?' selected':'')+'>'+s.toUpperCase()+'</option>';
-            }).join('');
+            var sndOpts = r2BuildSoundOptgroups(mel.sound || 'sine');
             var transposeStyle = 'flex:1;text-align:center;font:700 11px \'IBM Plex Mono\',monospace;padding:3px 0;border:1px solid rgba(0,200,100,.3);background:none;color:rgba(0,200,100,.8);cursor:pointer;';
             var p = r2MakePopup(btn,
               '<label>VOL</label>' +
@@ -9826,6 +10200,7 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             }
           });
 
+
           /* ── Init ── */
           renderR2Grid();
           r2RenderChain();
@@ -9833,6 +10208,8 @@ body:not(.day-mode) .music-controls .btn.icon:hover
           r2UpdateNameSelect(r2State.noteMode);
           r2RenderNotePills();
           r2Log('RITMO_2 v2.1 ready — '+r2State.tracks.length+' tracks · CADENA + CADENA MEL + NOTAS + I/O activos');
+          /* Re-render after all scripts load so SL presets appear in selectors */
+          window.addEventListener('load', function() { renderR2Grid(); }, {once:true});
         </script>
       </section>
       <!-- ══════════ / RITMO 2 ══════════ -->
@@ -14188,7 +14565,7 @@ function renderSeq64() {
   var html = '';
 
   html += '<div class="s64-header">';
-  html += '<div class="s64-title">64 SEQ</div>';
+  html += '<div class="s64-title">64S</div>';
   html += '<div class="s64-sub">8 memorias · 64 pasos · KeyStep experimental</div>';
   html += '</div>';
 
@@ -14503,7 +14880,7 @@ function renderSeq64() {
   html += '</div>';
 
   html += '<div class="s64-proj-box">';
-  html += '<div class="s64-proj-title">PROYECTO · 64 SEQ</div>';
+  html += '<div class="s64-proj-title">PROYECTO · 64S</div>';
   html += '<div class="s64-proj-row">';
   html += '<input class="s64-proj-name" id="s64ProjName" placeholder="nombre-proyecto" value="mi-seq64">';
   html += '<button class="s64-proj-btn" id="s64SaveBtn">Guardar JSON</button>';
@@ -14947,10 +15324,8 @@ function s64BindEvents() {
     if (!r2State.melodias) r2State.melodias = [];
     r2State.melodias.push(newMel);
     if (typeof renderR2Melodias === 'function') renderR2Melodias();
-    /* Navigate to RITMOS */
-    var ritmosBtn = Array.from(document.querySelectorAll('button, a')).find(function(b) {
-      return /^RITMOS$/i.test(b.textContent.trim());
-    });
+    /* Navigate to RITMOS 2 (data-nav-view="ritmos2") */
+    var ritmosBtn = document.querySelector('[data-nav-view="ritmos2"]');
     if (ritmosBtn) ritmosBtn.click();
     var self = this; self.textContent = '✓ ENVIADO';
     setTimeout(function() { self.textContent = '→ MEL'; }, 1800);
@@ -16315,6 +16690,38 @@ function s64LoadProject(file) {
     { key:'pan',       label:'PAN',    min:-1,   max:1,     step:0.01,  fmt:function(v){ return v===0?'C':(v<0?'L'+Math.round(-v*100):'R'+Math.round(v*100)); } }
   ];
 
+  /* ── Random preset generator ── */
+  function slRandomize() {
+    var eng = SL.engine;
+    var rand  = function(a, b) { return a + Math.random() * (b - a); };
+    var ri    = function(a, b) { return Math.floor(rand(a, b + 1)); };
+    var r2d   = function(v)    { return parseFloat(v.toFixed(2)); };
+    var r3d   = function(v)    { return parseFloat(v.toFixed(3)); };
+    var r1d   = function(v)    { return parseFloat(v.toFixed(1)); };
+    var among = function(arr)  { return arr.indexOf(eng) >= 0; };
+    var pitchRanges = {
+      kick:[24,50], tom:[36,56], snare:[40,68], clap:[50,72],
+      hihat:[65,90], openhat:[60,88], clave:[70,90], cowbell:[52,76],
+      zap:[58,95], noise:[30,72], acid:[28,58], bass:[28,60],
+      pad:[48,84], fm:[36,84], drone:[24,55], lead:[50,90]
+    };
+    var pr = pitchRanges[eng] || [36, 84];
+    SL.params = {
+      pitch:     ri(pr[0], pr[1]),
+      decay:     r2d(rand(among(['pad','drone']) ? 0.5 : 0.03, among(['pad','drone']) ? 4.0 : among(['lead']) ? 1.5 : 0.8)),
+      attack:    r3d(rand(0.001, among(['pad','drone']) ? 0.5 : 0.015)),
+      cutoff:    Math.round(rand(among(['kick','tom','bass','acid','drone']) ? 80 : 300, among(['hihat','openhat','zap','clave']) ? 18000 : 8000)),
+      resonance: r1d(rand(0.1, among(['acid']) ? 18 : among(['zap','clave']) ? 12 : 7)),
+      drive:     r2d(rand(0, among(['acid','zap','fm']) ? 0.85 : 0.3)),
+      delay:     r2d(rand(0, 0.55)),
+      reverb:    r2d(rand(0, 0.55)),
+      volume:    r2d(rand(0.5, 0.92)),
+      pan:       r2d(rand(-0.45, 0.45)),
+      tone:      r2d(rand(0, 1))
+    };
+    SL.loadedId = null; SL.loadedName = null;
+  }
+
   /* ── Render ── */
   function slRender() {
     var el = document.getElementById('soundlab');
@@ -16334,6 +16741,14 @@ function s64LoadProject(file) {
     var editLabel = SL.loadedName ? ('Editando: <b>'+SL.loadedName+'</b>') : 'Sonido nuevo (sin preset cargado)';
     h += '<div style="font:400 10px \'IBM Plex Mono\',monospace;color:rgba(255,176,0,.5);margin-bottom:14px;border-left:2px solid rgba(255,176,0,.2);padding-left:8px;">'
        + editLabel + '</div>';
+
+    /* ── Quick actions: RANDOM + NUEVO ── */
+    if (SL.engine !== 'mic') {
+      h += '<div style="display:flex;gap:6px;margin-bottom:16px;">';
+      h += '<button id="slRandomBtn" class="sl-save-btn" style="flex:1;" title="Genera parámetros aleatorios para el motor actual">🎲 RANDOM</button>';
+      h += '<button id="slNewBtn" class="sl-save-btn" style="flex:1;border-color:rgba(255,176,0,.2);color:rgba(255,176,0,.55);" title="Vuelve a los parámetros por defecto del motor">⊘ NUEVO</button>';
+      h += '</div>';
+    }
 
     /* ── Engine selector (hidden for mic presets) ── */
     if (SL.engine !== 'mic') {
@@ -16430,15 +16845,34 @@ function s64LoadProject(file) {
     }
 
     /* ── TEST button + waveform canvas ── */
-    h += '<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap;">';
+    h += '<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap;">';
     h += '<button id="slPlayBtn" class="sl-play-btn">▶ TEST</button>';
     h += '<canvas id="slCanvas" style="border:1px solid rgba(255,176,0,.14);background:rgba(0,0,0,.12);flex:1;min-width:180px;height:58px;max-width:100%;display:block;"></canvas>';
     h += '</div>';
+    /* Mini keyboard — C3 to B4 (midi 48-71) */
+    if (SL.engine !== 'mic') {
+      var _nn = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+      h += '<div style="margin-bottom:18px;">';
+      h += '<div class="sl-knob-label" style="margin-bottom:5px;">PROBAR NOTAS</div>';
+      h += '<div style="display:flex;flex-wrap:wrap;gap:2px;">';
+      for (var _m = 48; _m <= 71; _m++) {
+        var _name = _nn[_m % 12] + (Math.floor(_m / 12) - 1);
+        var _sharp = _name.indexOf('#') >= 0;
+        h += '<button class="sl-test-key" data-sl-test-midi="'+_m+'" title="'+_name+'"'
+           + ' style="font:700 7px \'IBM Plex Mono\',monospace;padding:5px 4px;min-width:28px;border:1px solid '
+           + (_sharp?'rgba(255,176,0,.1)':'rgba(255,176,0,.28)')+';background:'
+           + (_sharp?'rgba(0,0,0,.5)':'rgba(255,176,0,.05)')+';color:'
+           + (_sharp?'rgba(255,176,0,.45)':'rgba(255,176,0,.85)')+';cursor:pointer;text-align:center;line-height:1.2;">'
+           + _name + '</button>';
+      }
+      h += '</div></div>';
+    }
 
     /* ── Save / Duplicate row ── */
     h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">';
     h += '<input id="slName" class="sl-name-input" type="text" placeholder="Nombre del preset…" maxlength="40" value="'+(SL.editName||'')+'">';
     h += '<button id="slSaveBtn" class="sl-save-btn">+ GUARDAR</button>';
+    h += '<button id="slToRitmoVoice" class="sl-save-btn" style="border-color:rgba(0,180,255,.4);color:rgba(0,180,255,.9);" title="Enviar preset actual a VOICE en Ritmo">→ VOICE</button>';
     if (SL.loadedId) {
       h += '<button id="slDupBtn" class="sl-save-btn" style="border-color:rgba(255,176,0,.2);" title="Duplicar preset cargado">⊕ DUPLICAR</button>';
     }
@@ -16501,7 +16935,7 @@ function s64LoadProject(file) {
     h += '<div style="margin-top:32px;border-top:1px solid rgba(255,176,0,.12);padding-top:24px;">';
     h += '<div style="font:700 9px \'IBM Plex Mono\',monospace;letter-spacing:.2em;color:rgba(255,176,0,.55);text-transform:uppercase;margin-bottom:4px;">Nivel 2</div>';
     h += '<h3 style="font:800 18px \'IBM Plex Mono\',monospace;color:var(--ink);margin:0 0 8px;letter-spacing:-.02em;">Micrófono</h3>';
-    h += '<p style="font:400 10px \'IBM Plex Mono\',monospace;color:var(--muted);margin:0 0 16px;max-width:480px;">Graba audio desde el micrófono y guárdalo como preset para Ritmos, 64 SEQ o Progresiones.</p>';
+    h += '<p style="font:400 10px \'IBM Plex Mono\',monospace;color:var(--muted);margin:0 0 16px;max-width:480px;">Graba audio desde el micrófono y guárdalo como preset para Ritmos, 64S o Progresiones.</p>';
     /* Record button + level meter */
     var isRec = SL._micState === 'recording';
     h += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">';
@@ -16680,6 +17114,40 @@ function s64LoadProject(file) {
       slSave(); slStatus('Preset duplicado'); slRender();
       document.dispatchEvent(new CustomEvent('sl:presetsChanged'));
     });
+    /* Send current preset to Ritmo VOICE */
+    var vb = document.getElementById('slToRitmoVoice');
+    if (vb) vb.addEventListener('click', function() {
+      var presetId = SL.loadedId;
+      var presetName = (SL.loadedName || SL.editName || '').trim() || ('VOICE '+(SL.presets.length+1));
+      if (!presetId) {
+        presetId = 'sl-u'+Date.now();
+        presetName = (SL.editName || ('VOICE '+(SL.presets.length+1))).trim();
+        var newPr = { id:presetId, name:presetName, sourceType:SL.engine==='mic'?'mic':'synth', engine:SL.engine, params:Object.assign({},SL.params), createdAt:new Date().toISOString() };
+        if (SL.engine==='mic' && SL._loadedAudioData) { newPr.audioData=SL._loadedAudioData; newPr.mimeType=SL._loadedMimeType; newPr.duration=SL._loadedDuration; }
+        SL.presets.push(newPr);
+        SL.loadedId=presetId; SL.loadedName=presetName;
+        slSave();
+      }
+      /* Calculate lengthSteps from audio duration or default */
+      var bpmEl = document.getElementById('r2BpmInput');
+      var bpm2 = bpmEl ? (parseInt(bpmEl.value)||120) : 120;
+      var stepMs = (60/bpm2/2)*1000;
+      var dur2 = SL._loadedDuration || (SL.params && (SL.params.trimEnd||0)) || 1;
+      var lenSteps = Math.max(1, Math.min(64, Math.ceil((dur2*1000)/stepMs)));
+      /* Find next free startStep (after last clip) */
+      var startSt = 0;
+      if (window.r2State && r2State.voiceClips && r2State.voiceClips.length) {
+        r2State.voiceClips.forEach(function(c){ startSt = Math.max(startSt, c.startStep + c.lengthSteps); });
+        startSt = startSt % 64;
+      }
+      var clip = { id:'vc-'+Date.now(), presetId:presetId, name:presetName, startStep:startSt, lengthSteps:lenSteps, volume:80 };
+      if (!window.r2State) { slStatus('Ritmo no activo'); return; }
+      if (!r2State.voiceClips) r2State.voiceClips = [];
+      r2State.voiceClips.push(clip);
+      if (typeof renderR2VoiceSection === 'function') renderR2VoiceSection();
+      slStatus('Enviado a VOICE (paso '+startSt+')');
+    });
+
     /* Play preset */
     document.querySelectorAll('[data-sl-play]').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
@@ -16720,6 +17188,36 @@ function s64LoadProject(file) {
         SL.presets=SL.presets.filter(function(x){ return x.id!==id; });
         slSave(); slStatus('Preset eliminado'); slRender();
         document.dispatchEvent(new CustomEvent('sl:presetsChanged'));
+      });
+    });
+    /* RANDOM */
+    var randBtn = document.getElementById('slRandomBtn');
+    if (randBtn) randBtn.addEventListener('click', function() {
+      slRandomize(); slStatus('Parámetros generados'); slRender();
+    });
+    /* NUEVO — carga defaults del motor actual */
+    var newBtn = document.getElementById('slNewBtn');
+    if (newBtn) newBtn.addEventListener('click', function() {
+      var def = SL_BUILT_IN.find(function(pr){ return pr.engine === SL.engine; });
+      if (def) SL.params = Object.assign({}, def.params);
+      SL.loadedId = null; SL.loadedName = null;
+      slStatus('Parámetros por defecto'); slRender();
+    });
+    /* Mini keyboard test keys */
+    document.querySelectorAll('.sl-test-key').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var midi = parseInt(this.dataset.slTestMidi);
+        try {
+          var ctx = slCtx();
+          var fn = SL_ENGINES[SL.engine];
+          var params = Object.assign({}, SL.params, { pitch: midi });
+          if (SL.engine === 'mic' && SL._loadedAudioData) {
+            params.audioData = SL._loadedAudioData;
+            params.mimeType  = SL._loadedMimeType;
+            params.cacheKey  = SL.loadedId || '_test';
+          }
+          if (fn) fn(ctx, SL._analyser || ctx.destination, params);
+        } catch(e) {}
       });
     });
     /* Nivel 2: mic */
