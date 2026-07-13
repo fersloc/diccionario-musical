@@ -7703,9 +7703,11 @@ body:not(.day-mode) .music-controls .btn.icon:hover
                   <button id="r2SaveProjectBtn" style="border:1px solid rgba(255,176,0,.35);background:none;color:var(--gold);font:10px 'IBM Plex Mono',monospace;padding:5px 10px;cursor:pointer;letter-spacing:.06em;">Guardar proyecto</button>
                   <button id="r2OpenProjectBtn" style="border:1px solid rgba(255,176,0,.35);background:none;color:var(--gold);font:10px 'IBM Plex Mono',monospace;padding:5px 10px;cursor:pointer;letter-spacing:.06em;">Abrir proyecto</button>
                   <input id="r2OpenProjectInput" type="file" accept=".json,.r2.json" hidden>
-                  <button id="r2ExportMidiBtn" style="border:1px solid rgba(255,176,0,.6);background:rgba(255,176,0,.08);color:var(--gold);font:700 10px 'IBM Plex Mono',monospace;padding:5px 10px;cursor:pointer;letter-spacing:.06em;">↓ Exportar MIDI</button>
+                  <button id="r2ExportMidiBtn" style="border:1px solid rgba(255,176,0,.6);background:rgba(255,176,0,.08);color:var(--gold);font:700 10px 'IBM Plex Mono',monospace;padding:5px 10px;cursor:pointer;letter-spacing:.06em;">↓ MIDI completo</button>
+                  <button id="r2ExportDrumBtn" style="border:1px solid rgba(255,176,0,.35);background:none;color:var(--gold);font:10px 'IBM Plex Mono',monospace;padding:5px 10px;cursor:pointer;letter-spacing:.06em;">Solo percusión</button>
+                  <button id="r2ExportMelBtn" style="border:1px solid rgba(255,176,0,.35);background:none;color:var(--gold);font:10px 'IBM Plex Mono',monospace;padding:5px 10px;cursor:pointer;letter-spacing:.06em;">Solo melodías</button>
                 </div>
-                <p id="r2ProjectStatus" style="font-size:9px;color:rgba(255,176,0,.5);margin:2px 0 0;line-height:1.4;">El MIDI exporta el patrón de batería en pista de percusión (canal 10 GM).</p>
+                <p id="r2ProjectStatus" style="font-size:9px;color:rgba(255,176,0,.5);margin:2px 0 0;line-height:1.4;"></p>
               </div>
             </div>
           </div>
@@ -9552,50 +9554,224 @@ body:not(.day-mode) .music-controls .btn.icon:hover
               reader.readAsText(file);
             }
 
-            /* Export MIDI (GM channel 10 drums) */
-            function r2ExportMidi() {
-              var drumMap = { kick:36, snare:38, hihat:42, clap:39, clave:75, tom:48 };
-              var bpm     = parseInt(document.getElementById('r2BpmInput').value) || 120;
-              var tempo   = Math.round(60000000 / bpm);
-              var tpq     = 480;
-              var tStep   = tpq / 2; // 16th note = tpq/2 for 8th-note grid (adjust if needed)
+            /* ── MIDI Type 1 multitrack exporter ────────────────────────────
+               Timing model — matches r2Tick exactly:
+                 q   = 60000 / bpm / 2   (ms per 1/8-note step)
+                 tpq = 480               (ticks per quarter note)
+                 1 step (1/8 note) = tpq/2 = 240 ticks
+               ─────────────────────────────────────────────────────────────── */
+            function r2ExportMidiV2(mode) {
+              var DRUM_MAP = { kick:36, snare:38, hihat:42, clap:39, clave:75, tom:48 };
+              var bpm   = parseInt(document.getElementById('r2BpmInput').value) || 120;
+              var tempo = Math.round(60000000 / bpm);
+              var tpq   = 480;
+              var TSTEP = tpq / 2; // 240 ticks per 1/8-note step (NOT a 16th note — comment was wrong)
+              var safe  = (document.getElementById('r2ProjectName').value || 'ritmo2')
+                            .trim().replace(/[^a-z0-9\-_]/gi,'_');
 
-              var events = [];
-              r2State.tracks.forEach(function(track) {
-                var note = drumMap[track.sound] || 38;
-                for (var s = 0; s < 16; s++) {
-                  if (!track.steps[s]) continue;
-                  var vel = Math.round(((track.vol !== undefined ? track.vol : 80) / 100) * (track.accents && track.accents[s] ? 110 : 80));
-                  vel = Math.max(1, Math.min(127, vel));
-                  events.push({tick: s * tStep,          cmd: 0x99, note: note, vel: vel });
-                  events.push({tick: s * tStep + tStep - 2, cmd: 0x89, note: note, vel: 0 });
+              /* helpers */
+              function vl(n) {
+                if (n < 0x80) return [n];
+                if (n < 0x4000) return [0x80|(n>>7), n&0x7F];
+                return [0x80|(n>>14), 0x80|((n>>7)&0x7F), n&0x7F];
+              }
+              function b32(n){ return [(n>>24)&0xFF,(n>>16)&0xFF,(n>>8)&0xFF,n&0xFF]; }
+              function sb(s) { var o=[]; for(var i=0;i<s.length;i++) o.push(s.charCodeAt(i)&0xFF); return o; }
+
+              /* ticks per step for a given playback rate (1=¼, 2=⅛, 4=1/16, 8=1/32) */
+              function stks(rate){ return Math.round(tpq / (rate||2)); }
+
+              /* build MTrk chunk from array of {t:absoluteTick, b:bytes[]} */
+              function mtrk(evs) {
+                evs.sort(function(a,b){ return a.t - b.t; });
+                var td=[], prev=0;
+                evs.forEach(function(ev){ td=td.concat(vl(ev.t-prev)).concat(ev.b); prev=ev.t; });
+                td=td.concat([0x00,0xFF,0x2F,0x00]); // End of Track
+                return [0x4D,0x54,0x72,0x6B].concat(b32(td.length)).concat(td);
+              }
+
+              /* total MIDI duration = longest track */
+              var durs = [];
+              r2State.tracks.forEach(function(t){ durs.push(16 * stks(t.rate||2)); });
+              (r2State.melodias||[]).forEach(function(m){ durs.push((m.steps?m.steps.length:16)*stks(m.rate||2)); });
+              var TOTAL = durs.length ? Math.max.apply(null,durs) : 32*TSTEP;
+
+              /* ── Track 0: Conductor (tempo + time signature only, no notes) ── */
+              function trk0() {
+                var nm = sb('Ritmo2 - '+bpm+' BPM');
+                return mtrk([
+                  {t:0, b:[0xFF,0x58,0x04,0x04,0x02,0x18,0x08]},                                          // 4/4
+                  {t:0, b:[0xFF,0x51,0x03,(tempo>>16)&0xFF,(tempo>>8)&0xFF,tempo&0xFF]},                   // Tempo
+                  {t:0, b:[0xFF,0x03].concat(vl(nm.length)).concat(nm)}                                    // Name
+                ]);
+              }
+
+              /* ── Track 1: Percussion — channel 9 (MIDI ch 10 GM) ── */
+              function trk1() {
+                var evs = [];
+                var nm = sb('Percusión');
+                evs.push({t:0, b:[0xFF,0x03].concat(vl(nm.length)).concat(nm)});
+                r2State.tracks.forEach(function(track) {
+                  var note = DRUM_MAP[track.sound];
+                  if (note === undefined) return;                // skip melodic/soundlab tracks
+                  var stp = stks(track.rate||2);
+                  var patLen = 16 * stp;
+                  var reps = Math.ceil(TOTAL / patLen);
+                  for (var rep=0; rep<reps; rep++) {
+                    for (var s=0; s<16; s++) {
+                      if (!track.steps[s]) continue;
+                      var tick = rep*patLen + s*stp;
+                      if (tick >= TOTAL) break;
+                      var acc = !!(track.accents && track.accents[s]);
+                      var vol = track.vol !== undefined ? track.vol : 80;
+                      var vel = Math.max(1, Math.min(127, Math.round((vol/100)*(acc?110:80))));
+                      evs.push({t:tick,          b:[0x99, note, vel]});
+                      evs.push({t:tick+stp-2,    b:[0x89, note, 0]});
+                    }
+                  }
+                });
+                return mtrk(evs);
+              }
+
+              /* ── Track N: one melodía ── */
+              function trkMel(mel, mi, ch) {
+                var evs = [];
+                var nm = sb(mel.label || ('Melodía '+(mi+1)));
+                evs.push({t:0, b:[0xFF,0x03].concat(vl(nm.length)).concat(nm)});
+                var stp     = stks(mel.rate||2);
+                var isChord = (mel.mode||'chord') === 'chord';
+                var vol     = mel.vol !== undefined ? mel.vol : 80;
+                var vel     = Math.max(1, Math.min(127, Math.round(vol/100*100)));
+                var noteDur = Math.max(1, stp-2);
+                var chOn    = 0x90|(ch&0x0F);
+                var chOff   = 0x80|(ch&0x0F);
+                var len     = mel.steps ? mel.steps.length : 16;
+                for (var s=0; s<len; s++) {
+                  if (!mel.steps[s]) continue;
+                  var tick = s*stp;
+                  if (isChord) {
+                    var chord = mel.chords ? mel.chords[s] : null;
+                    if (!chord || !chord.root) continue;
+                    /* exact same formula as r2Tick fireStep: shift oct then add transpose */
+                    var cOct  = (chord.oct !== undefined ? chord.oct : 4) + (mel.octave||0);
+                    var notes = r2ChordNotes(chord.root, chord.type, cOct);
+                    var tr    = mel.transpose || 0;
+                    notes.forEach(function(n) {
+                      n = Math.max(0, Math.min(127, n+tr));
+                      evs.push({t:tick,         b:[chOn,  n, vel]});
+                      evs.push({t:tick+noteDur, b:[chOff, n, 0]});
+                    });
+                  } else {
+                    /* note mode: same semis calculation as r2Tick */
+                    var noteStr = (mel.notes && mel.notes[s]) || 'C4';
+                    var semis   = (mel.octave||0)*12 + (mel.transpose||0);
+                    var mn = Math.max(0, Math.min(127, r2NoteToMidi(noteStr)+semis));
+                    evs.push({t:tick,         b:[chOn,  mn, vel]});
+                    evs.push({t:tick+noteDur, b:[chOff, mn, 0]});
+                  }
                 }
-              });
-              events.sort(function(a, b){ return a.tick - b.tick; });
+                return mtrk(evs);
+              }
 
-              /* Build track chunk bytes */
-              var td = [0x00, 0xFF, 0x51, 0x03, (tempo>>16)&0xFF, (tempo>>8)&0xFF, tempo&0xFF];
-              var prev = 0;
-              events.forEach(function(ev) {
-                var d = ev.tick - prev; prev = ev.tick;
-                td = td.concat(varLen(d), [ev.cmd, ev.note, ev.vel]);
-              });
-              td = td.concat([0x00, 0xFF, 0x2F, 0x00]);
+              /* ── Melodic r2State.tracks (synth/soundlab — not in DRUM_MAP) ── */
+              function trkMelTrack(track, ti, ch) {
+                var evs = [];
+                var nm = sb(track.label || ('Track Mel.'+(ti+1)));
+                evs.push({t:0, b:[0xFF,0x03].concat(vl(nm.length)).concat(nm)});
+                var stp     = stks(track.rate||2);
+                var chOn    = 0x90|(ch&0x0F);
+                var chOff   = 0x80|(ch&0x0F);
+                var vol     = track.vol !== undefined ? track.vol : 80;
+                var vel     = Math.max(1, Math.min(127, Math.round(vol/100*100)));
+                var noteDur = Math.max(1, stp-2);
+                for (var s=0; s<16; s++) {
+                  if (!track.steps[s]) continue;
+                  var noteStr = (track.notes && track.notes[s]) || 'C4';
+                  var mn = Math.max(0, Math.min(127, r2NoteToMidi(noteStr)));
+                  var tick = s*stp;
+                  evs.push({t:tick,         b:[chOn,  mn, vel]});
+                  evs.push({t:tick+noteDur, b:[chOff, mn, 0]});
+                }
+                return mtrk(evs);
+              }
 
-              /* MIDI file */
-              var f = [0x4D,0x54,0x68,0x64, 0,0,0,6, 0,0, 0,1, (tpq>>8)&0xFF, tpq&0xFF,
-                       0x4D,0x54,0x72,0x6B, (td.length>>24)&0xFF,(td.length>>16)&0xFF,(td.length>>8)&0xFF,td.length&0xFF];
-              f = f.concat(td);
+              /* ── Structural verifier (logs to console) ── */
+              function verifyMidi(f) {
+                var ok = f[0]===0x4D&&f[1]===0x54&&f[2]===0x68&&f[3]===0x64;
+                var fmt  = (f[8]<<8)|f[9];
+                var ntrk = (f[10]<<8)|f[11];
+                var tpqv = (f[12]<<8)|f[13];
+                var pos = 14, info = [];
+                info.push('MThd:'+(ok?'OK':'FAIL')+' fmt='+fmt+' trks='+ntrk+' tpq='+tpqv);
+                for (var t=0; t<ntrk && pos<f.length; t++) {
+                  var isM = f[pos]===0x4D&&f[pos+1]===0x54&&f[pos+2]===0x72&&f[pos+3]===0x6B;
+                  var tlen = (f[pos+4]<<24)|(f[pos+5]<<16)|(f[pos+6]<<8)|f[pos+7];
+                  /* count note-on/off bytes inside track (fast scan) */
+                  var nOn=0, nOff=0, tp=pos+8, end=pos+8+tlen;
+                  while (tp<end-3) {
+                    var by=f[tp];
+                    if (by===0xFF){ tp+=2; var ml=f[tp]&0x7F; tp++; tp+=ml; }
+                    else if ((by&0xF0)===0x90){ nOn++;  tp+=3; }
+                    else if ((by&0xF0)===0x80){ nOff++; tp+=3; }
+                    else tp++;
+                  }
+                  info.push('Trk'+t+':'+(isM?'OK':'BAD')+' '+tlen+'B on='+nOn+' off='+nOff);
+                  pos += 8 + tlen;
+                }
+                return info.join(' | ');
+              }
 
-              var name = (document.getElementById('r2ProjectName').value || 'ritmo2').trim().replace(/[^a-z0-9\-_]/gi,'_');
-              var a = document.createElement('a');
-              a.href = URL.createObjectURL(new Blob([new Uint8Array(f)], {type:'audio/midi'}));
-              a.download = name + '-' + bpm + 'bpm.mid'; a.click();
-              document.getElementById('r2ProjectStatus').textContent = 'MIDI descargado. Ábrelo en Ableton / Logic en una pista de percusión.';
+              /* ── Assemble tracks ── */
+              var _mc = -1;
+              function nch(){ _mc++; if(_mc===9)_mc++; return _mc; }
+
+              var tracks = [trk0()];
+              var inclDrum = mode==='all'||mode==='drums';
+              var inclMel  = mode==='all'||mode==='melody';
+              if (inclDrum) tracks.push(trk1());
+              if (inclMel) {
+                r2State.tracks.forEach(function(track,ti){
+                  if (DRUM_MAP[track.sound]!==undefined) return;
+                  tracks.push(trkMelTrack(track, ti, nch()));
+                });
+                (r2State.melodias||[]).forEach(function(mel,mi){
+                  tracks.push(trkMel(mel, mi, nch()));
+                });
+              }
+
+              /* ── SMF Type 1 header ── */
+              var nTrk = tracks.length;
+              var f = [0x4D,0x54,0x68,0x64, 0,0,0,6, 0,1, (nTrk>>8)&0xFF,nTrk&0xFF, (tpq>>8)&0xFF,tpq&0xFF];
+              tracks.forEach(function(t){ f=f.concat(t); });
+
+              /* ── Verify structure ── */
+              var report = verifyMidi(f);
+              console.log('[r2 MIDI Export]', report);
+
+              /* ── Download ── */
+              var sfx = {all:'completo',drums:'percusion',melody:'melodias'}[mode]||'completo';
+              var blob = new Blob([new Uint8Array(f)], {type:'audio/midi'});
+              var a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=safe+'-'+bpm+'bpm-'+sfx+'.mid'; a.click();
+
+              /* ── Status ── */
+              var dCount = r2State.tracks.filter(function(t){ return DRUM_MAP[t.sound]!==undefined; }).length;
+              var mCount = (r2State.melodias||[]).length;
+              var xCount = r2State.tracks.filter(function(t){ return DRUM_MAP[t.sound]===undefined; }).length;
+              var totalSteps = Math.round(TOTAL / TSTEP);
+              var parts=[];
+              if (inclDrum && dCount) parts.push(dCount+' pista'+(dCount===1?'':'s')+' de percusión');
+              if (inclMel) {
+                if (mCount) parts.push(mCount+' melodía'+(mCount===1?'':'s'));
+                if (xCount) parts.push(xCount+' pista'+(xCount===1?'':'s')+' melódica'+(xCount===1?'':'s'));
+              }
+              document.getElementById('r2ProjectStatus').textContent =
+                'MIDI '+sfx+' descargado: '+(parts.length?parts.join(' + '):'sin contenido')+', '+totalSteps+' pasos, '+bpm+' BPM.';
             }
 
             document.getElementById('r2SaveProjectBtn').addEventListener('click', r2SaveProject);
-            document.getElementById('r2ExportMidiBtn').addEventListener('click', r2ExportMidi);
+            document.getElementById('r2ExportMidiBtn').addEventListener('click',  function(){ r2ExportMidiV2('all'); });
+            document.getElementById('r2ExportDrumBtn').addEventListener('click',  function(){ r2ExportMidiV2('drums'); });
+            document.getElementById('r2ExportMelBtn').addEventListener('click',   function(){ r2ExportMidiV2('melody'); });
             document.getElementById('r2OpenProjectBtn').addEventListener('click', function(){
               document.getElementById('r2OpenProjectInput').click();
             });
