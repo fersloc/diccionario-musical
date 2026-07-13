@@ -9571,7 +9571,19 @@ body:not(.day-mode) .music-controls .btn.icon:hover
                 return [0x80|(n>>14), 0x80|((n>>7)&0x7F), n&0x7F];
               }
               function b32(n){ return [(n>>24)&0xFF,(n>>16)&0xFF,(n>>8)&0xFF,n&0xFF]; }
-              function sb(s) { var o=[]; for(var i=0;i<s.length;i++) o.push(s.charCodeAt(i)&0xFF); return o; }
+              function sb(s) {
+                /* UTF-8 encoding — needed for tildes/ñ in MIDI meta events */
+                if (typeof TextEncoder !== 'undefined') return Array.from(new TextEncoder().encode(s));
+                /* Manual UTF-8 fallback */
+                var o=[];
+                for (var i=0;i<s.length;i++) {
+                  var c=s.charCodeAt(i);
+                  if (c<0x80) o.push(c);
+                  else if (c<0x800) o.push(0xC0|(c>>6), 0x80|(c&0x3F));
+                  else o.push(0xE0|(c>>12), 0x80|((c>>6)&0x3F), 0x80|(c&0x3F));
+                }
+                return o;
+              }
 
               /* ticks per step for a given playback rate (1=¼, 2=⅛, 4=1/16, 8=1/32) */
               function stks(rate){ return Math.round(tpq / (rate||2)); }
@@ -9628,11 +9640,8 @@ body:not(.day-mode) .music-controls .btn.icon:hover
                 return mtrk(evs);
               }
 
-              /* ── Track N: one melodía ── */
+              /* ── Track N: one melodía — returns null if no active notes ── */
               function trkMel(mel, mi, ch) {
-                var evs = [];
-                var nm = sb(mel.label || ('Melodía '+(mi+1)));
-                evs.push({t:0, b:[0xFF,0x03].concat(vl(nm.length)).concat(nm)});
                 var stp     = stks(mel.rate||2);
                 var isChord = (mel.mode||'chord') === 'chord';
                 var vol     = mel.vol !== undefined ? mel.vol : 80;
@@ -9641,6 +9650,7 @@ body:not(.day-mode) .music-controls .btn.icon:hover
                 var chOn    = 0x90|(ch&0x0F);
                 var chOff   = 0x80|(ch&0x0F);
                 var len     = mel.steps ? mel.steps.length : 16;
+                var noteEvs = [];
                 for (var s=0; s<len; s++) {
                   if (!mel.steps[s]) continue;
                   var tick = s*stp;
@@ -9653,41 +9663,43 @@ body:not(.day-mode) .music-controls .btn.icon:hover
                     var tr    = mel.transpose || 0;
                     notes.forEach(function(n) {
                       n = Math.max(0, Math.min(127, n+tr));
-                      evs.push({t:tick,         b:[chOn,  n, vel]});
-                      evs.push({t:tick+noteDur, b:[chOff, n, 0]});
+                      noteEvs.push({t:tick,         b:[chOn,  n, vel]});
+                      noteEvs.push({t:tick+noteDur, b:[chOff, n, 0]});
                     });
                   } else {
                     /* note mode: same semis calculation as r2Tick */
                     var noteStr = (mel.notes && mel.notes[s]) || 'C4';
                     var semis   = (mel.octave||0)*12 + (mel.transpose||0);
                     var mn = Math.max(0, Math.min(127, r2NoteToMidi(noteStr)+semis));
-                    evs.push({t:tick,         b:[chOn,  mn, vel]});
-                    evs.push({t:tick+noteDur, b:[chOff, mn, 0]});
+                    noteEvs.push({t:tick,         b:[chOn,  mn, vel]});
+                    noteEvs.push({t:tick+noteDur, b:[chOff, mn, 0]});
                   }
                 }
-                return mtrk(evs);
+                if (!noteEvs.length) return null; // skip empty tracks
+                var nm = sb((mel.label || '').trim() || ('Melodía '+(mi+1)));
+                return mtrk([{t:0, b:[0xFF,0x03].concat(vl(nm.length)).concat(nm)}].concat(noteEvs));
               }
 
-              /* ── Melodic r2State.tracks (synth/soundlab — not in DRUM_MAP) ── */
+              /* ── Melodic r2State.tracks (synth/soundlab — not in DRUM_MAP) — null if empty ── */
               function trkMelTrack(track, ti, ch) {
-                var evs = [];
-                var nm = sb(track.label || ('Track Mel.'+(ti+1)));
-                evs.push({t:0, b:[0xFF,0x03].concat(vl(nm.length)).concat(nm)});
                 var stp     = stks(track.rate||2);
                 var chOn    = 0x90|(ch&0x0F);
                 var chOff   = 0x80|(ch&0x0F);
                 var vol     = track.vol !== undefined ? track.vol : 80;
                 var vel     = Math.max(1, Math.min(127, Math.round(vol/100*100)));
                 var noteDur = Math.max(1, stp-2);
+                var noteEvs = [];
                 for (var s=0; s<16; s++) {
                   if (!track.steps[s]) continue;
                   var noteStr = (track.notes && track.notes[s]) || 'C4';
                   var mn = Math.max(0, Math.min(127, r2NoteToMidi(noteStr)));
                   var tick = s*stp;
-                  evs.push({t:tick,         b:[chOn,  mn, vel]});
-                  evs.push({t:tick+noteDur, b:[chOff, mn, 0]});
+                  noteEvs.push({t:tick,         b:[chOn,  mn, vel]});
+                  noteEvs.push({t:tick+noteDur, b:[chOff, mn, 0]});
                 }
-                return mtrk(evs);
+                if (!noteEvs.length) return null; // skip empty tracks
+                var nm = sb((track.label || '').trim() || ('Track Mel.'+(ti+1)));
+                return mtrk([{t:0, b:[0xFF,0x03].concat(vl(nm.length)).concat(nm)}].concat(noteEvs));
               }
 
               /* ── Structural verifier (logs to console) ── */
@@ -9723,14 +9735,22 @@ body:not(.day-mode) .music-controls .btn.icon:hover
               var tracks = [trk0()];
               var inclDrum = mode==='all'||mode==='drums';
               var inclMel  = mode==='all'||mode==='melody';
-              if (inclDrum) tracks.push(trk1());
+              var exportedDrum = false;
+              var exportedMelCount = 0;
+              if (inclDrum) {
+                var drumChunk = trk1();
+                tracks.push(drumChunk);
+                exportedDrum = true;
+              }
               if (inclMel) {
                 r2State.tracks.forEach(function(track,ti){
                   if (DRUM_MAP[track.sound]!==undefined) return;
-                  tracks.push(trkMelTrack(track, ti, nch()));
+                  var chunk = trkMelTrack(track, ti, nch());
+                  if (chunk) { tracks.push(chunk); exportedMelCount++; }
                 });
                 (r2State.melodias||[]).forEach(function(mel,mi){
-                  tracks.push(trkMel(mel, mi, nch()));
+                  var chunk = trkMel(mel, mi, nch());
+                  if (chunk) { tracks.push(chunk); exportedMelCount++; }
                 });
               }
 
@@ -9748,17 +9768,11 @@ body:not(.day-mode) .music-controls .btn.icon:hover
               var blob = new Blob([new Uint8Array(f)], {type:'audio/midi'});
               var a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=safe+'-'+bpm+'bpm-'+sfx+'.mid'; a.click();
 
-              /* ── Status ── */
-              var dCount = r2State.tracks.filter(function(t){ return DRUM_MAP[t.sound]!==undefined; }).length;
-              var mCount = (r2State.melodias||[]).length;
-              var xCount = r2State.tracks.filter(function(t){ return DRUM_MAP[t.sound]===undefined; }).length;
+              /* ── Status — count only actually exported, non-empty tracks ── */
               var totalSteps = Math.round(TOTAL / TSTEP);
-              var parts=[];
-              if (inclDrum && dCount) parts.push(dCount+' pista'+(dCount===1?'':'s')+' de percusión');
-              if (inclMel) {
-                if (mCount) parts.push(mCount+' melodía'+(mCount===1?'':'s'));
-                if (xCount) parts.push(xCount+' pista'+(xCount===1?'':'s')+' melódica'+(xCount===1?'':'s'));
-              }
+              var parts = [];
+              if (exportedDrum) parts.push('1 pista de percusión');
+              if (exportedMelCount) parts.push(exportedMelCount+' pista'+(exportedMelCount===1?'':'s')+' melódica'+(exportedMelCount===1?'':'s'));
               document.getElementById('r2ProjectStatus').textContent =
                 'MIDI '+sfx+' descargado: '+(parts.length?parts.join(' + '):'sin contenido')+', '+totalSteps+' pasos, '+bpm+' BPM.';
             }
