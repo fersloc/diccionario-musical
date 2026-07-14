@@ -7532,6 +7532,22 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             </div>
           </div>
 
+          <!-- Ejemplos — después de Cadena Percusión -->
+          <div class="r2-prob">
+            <div class="r2-prob-header" id="r2EjToggle" style="cursor:pointer;user-select:none;">
+              <span class="r2-prob-title">EJEMPLOS · Patrones de Batería <span id="r2EjCount" style="font-size:9px;color:var(--muted);font-weight:400;"></span></span>
+              <span id="r2EjArrow" style="font-size:9px;color:var(--muted);">▼</span>
+            </div>
+            <div id="r2EjContainer" style="display:none;margin-top:12px;"></div>
+          </div>
+
+          <!-- Divisor percusión / melodías -->
+          <div style="display:flex;align-items:center;margin:14px 0 8px;">
+            <div style="flex:1;height:1px;background:rgba(255,176,0,.4);"></div>
+            <span style="padding:0 10px;font:700 9px 'IBM Plex Mono',monospace;letter-spacing:.2em;color:rgba(255,176,0,.7);">MELODÍAS · SECUENCIAS TONALES</span>
+            <div style="flex:1;height:1px;background:rgba(255,176,0,.4);"></div>
+          </div>
+
           <!-- Melodías Grid -->
           <div style="position:relative;">
             <div id="r2MelContainer"></div>
@@ -7664,14 +7680,6 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             </div>
           </div>
 
-          <!-- Ejemplos — al fondo -->
-          <div class="r2-prob">
-            <div class="r2-prob-header" id="r2EjToggle" style="cursor:pointer;user-select:none;">
-              <span class="r2-prob-title">EJEMPLOS · Patrones de Batería</span>
-              <span id="r2EjArrow" style="font-size:9px;color:var(--muted);">▼</span>
-            </div>
-            <div id="r2EjContainer" style="display:none;margin-top:12px;"></div>
-          </div>
 
           <!-- VOICE · clips desde Sound Lab -->
           <div class="r2-prob" style="margin-top:10px;">
@@ -7814,78 +7822,181 @@ body:not(.day-mode) .music-controls .btn.icon:hover
 
           /* Grupos de ejemplos — se muestran agrupados por región */
           var R2_GRUPOS = [
+            /* ── A. Argentina, Perú y Cono Sur ── */
             {
-              label: 'Argentina · Perú',
+              label: 'A · Argentina, Perú y Cono Sur',
               items: [
-                { name:'FESTEJO',   desc:'Perú · Afroperuano', tracks:[
+                { name:'FESTEJO',     desc:'Perú · Afroperuano', tracks:[
                   { label:'CAJÓN BAJO', sound:'kick',  steps:[1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0], probs:_p100(), accents:_a0() },
                   { label:'CAJÓN TONO',sound:'tom',   steps:[0,0,1,0,0,1,0,0,0,1,0,0,0,0,1,0], probs:_p100(), accents:_a0() },
                   { label:'QUIJADA',   sound:'hihat', steps:[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1], probs:_p100(), accents:_a0() }
                 ]},
-                { name:'CUARTETO',  desc:'Argentina · Córdoba', tracks:[
+                { name:'LANDÓ',       desc:'Perú · Afroperuano grave', tracks:[
+                  { label:'CAJÓN BAJO', sound:'kick',  steps:[1,0,0,1,0,0,0,0,1,0,0,1,0,0,1,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CAJÓN TONO', sound:'tom',   steps:[0,0,1,0,0,1,0,1,0,0,1,0,0,1,0,0], probs:_p100(), accents:_a0() },
+                  { label:'QUIJADA',    sound:'hihat', steps:[0,1,0,0,1,0,0,1,0,1,0,0,1,0,0,1], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'MARINERA',    desc:'Perú · Lima', tracks:[
+                  { label:'CAJÓN',  sound:'kick', steps:[1,0,0,1,0,0,1,0,0,0,1,0,0,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'PALMAS', sound:'clap', steps:[0,0,1,0,0,1,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'HUAYNO',      desc:'Perú · Bolivia · Andino', tracks:[
+                  { label:'BOMBO',    sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CAJA',     sound:'snare', steps:[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'PLATILLO', sound:'hihat', steps:[1,1,0,1,1,0,1,0,1,1,0,1,1,0,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'CUARTETO',    desc:'Argentina · Córdoba', tracks:[
                   { label:'BOMBO',      sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
                   { label:'REDOBLANTE', sound:'snare', steps:[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], probs:_p100(), accents:_a0() }
                 ]},
-                { name:'CUMBIA',    desc:'Perú · Andes (Chicha)', tracks:[
+                { name:'CUMBIA',      desc:'Perú · Andes chicha', tracks:[
                   { label:'BOMBO',      sound:'kick',  steps:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:_a0() },
                   { label:'REDOBLANTE', sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
                   { label:'GÜIRO',      sound:'hihat', steps:[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1], probs:_p100(), accents:_a0() }
                 ]},
-                { name:'CHACARERA', desc:'Argentina · Santiago del Estero', tracks:[
+                { name:'CHACARERA',   desc:'Argentina · Santiago del Estero', tracks:[
                   { label:'BOMBO',      sound:'kick',  steps:[1,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0], probs:_p100(), accents:_a0() },
                   { label:'CAJA',       sound:'snare', steps:[0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0], probs:_p100(), accents:_a0() },
                   { label:'REPIQUETEO', sound:'clave', steps:[0,1,0,1,0,0,1,0,0,1,0,1,0,0,1,0], probs:_p100(), accents:_a0() }
                 ]},
-                { name:'MARINERA',  desc:'Perú · Lima', tracks:[
-                  { label:'CAJÓN',  sound:'kick', steps:[1,0,0,1,0,0,1,0,0,0,1,0,0,0,0,0], probs:_p100(), accents:_a0() },
-                  { label:'PALMAS', sound:'clap', steps:[0,0,1,0,0,1,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() }
+                { name:'ZAMBA',       desc:'Argentina · vals criollo 6/8', tracks:[
+                  { label:'BOMBO',  sound:'kick',  steps:[1,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0] },
+                  { label:'CAJA',   sound:'snare', steps:[0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'PALMAS', sound:'clap',  steps:[0,1,0,0,1,0,0,0,0,1,0,0,0,1,0,0], probs:_p100(), accents:_a0() }
                 ]},
-                { name:'MALAMBO',   desc:'Argentina · Pampas', tracks:[
+                { name:'MALAMBO',     desc:'Argentina · Pampas zapateo', tracks:[
                   { label:'BOMBO',   sound:'kick', steps:[1,0,1,0,1,1,0,1,1,0,1,0,1,1,0,1], probs:_p100(), accents:_a0() },
                   { label:'ZAPATEO', sound:'tom',  steps:[1,1,0,1,0,1,1,0,1,1,0,1,0,1,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'CUECA',       desc:'Chile · Bolivia 6/8', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,1,0,0,1,0,0,0,1,0,0,1,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'PALMAS',  sound:'clap',  steps:[0,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'CARNAVALITO', desc:'Andino · festivo', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,1,0,1,0,0,0,1,0,1,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'SAYA',        desc:'Bolivia · Afroboliviano', tracks:[
+                  { label:'BOMBO',    sound:'kick',  steps:[1,0,1,0,0,0,1,0,1,0,1,0,0,0,1,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CAJA',     sound:'snare', steps:[0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1], probs:_p100(), accents:_a0() },
+                  { label:'CAMPANA',  sound:'clave', steps:[0,1,0,1,0,0,1,0,0,1,0,1,0,0,1,0], probs:_p100(), accents:_a0() }
                 ]}
               ]
             },
+            /* ── B. Caribe y Latinoamérica ── */
             {
-              label: 'Internacional',
+              label: 'B · Caribe y Latinoamérica',
               items: [
-                { name:'ROCK', desc:'Beat clásico', tracks:[
+                { name:'SALSA',      desc:'Caribe · clave 2-3', tracks:[
+                  { label:'CLAVE',   sound:'clave', steps:[1,0,0,1,0,0,1,0,0,0,1,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'SON CUBANO', desc:'Cuba · base de son', tracks:[
+                  { label:'CLAVE',  sound:'clave', steps:[1,0,0,1,0,0,1,0,0,0,1,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'BONGÓ',  sound:'tom',   steps:[1,0,1,0,0,1,0,0,1,0,1,0,0,1,0,0], probs:_p100(), accents:_a0() },
+                  { label:'BOMBO',  sound:'kick',  steps:[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] }
+                ]},
+                { name:'MAMBO',      desc:'Cuba · big band percusión', tracks:[
+                  { label:'CLAVE',   sound:'clave', steps:[1,0,0,1,0,0,1,0,0,0,1,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'TIMBAL',  sound:'snare', steps:[0,0,0,0,1,0,0,1,0,0,0,0,1,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'CAMPANA', sound:'hihat', steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'MERENGUE',   desc:'Rep. Dominicana · 2/4', tracks:[
+                  { label:'TAMBORA', sound:'kick',  steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
+                  { label:'GÜIRA',   sound:'clave', steps:[1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1], probs:_p100(), accents:_a0() },
+                  { label:'PALO',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'BACHATA',    desc:'Rep. Dominicana · romántico', tracks:[
+                  { label:'BOMBO',  sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',   sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'BALSIÉ', sound:'clave', steps:[1,0,1,0,0,0,1,0,1,0,0,1,0,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'GÜIRA',  sound:'hihat', steps:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'REGGAETÓN',  desc:'Puerto Rico · beat urbano', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'DEMBOW',  sound:'snare', steps:[0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'CLAP',    sound:'clap',  steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'DEMBOW',     desc:'Caribe · patrón base', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'SAMBA',      desc:'Brasil · surdo y caixa', tracks:[
+                  { label:'SURDO',  sound:'kick',  steps:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CAIXA',  sound:'snare', steps:[0,1,1,0,1,1,0,1,0,1,1,0,1,1,0,1], probs:_p100(), accents:_a0() },
+                  { label:'CLAVE',  sound:'clave', steps:[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'BOSSA NOVA', desc:'Brasil · jazz samba suave', tracks:[
+                  { label:'SURDO',  sound:'kick',  steps:[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'RIM',    sound:'snare', steps:[0,0,1,0,0,1,0,0,0,0,1,0,0,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CLAVE',  sound:'clave', steps:[1,0,0,1,0,0,1,0,0,0,1,0,1,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'BAIÃO',      desc:'Brasil Nordeste · forró', tracks:[
+                  { label:'ZABUMBA',   sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CAIXA',     sound:'snare', steps:[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1], probs:_p100(), accents:_a0() },
+                  { label:'TRIÂNGULO', sound:'hihat', steps:[1,0,1,1,0,1,1,0,1,0,1,1,0,1,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'CANDOMBE',   desc:'Uruguay · tambores', tracks:[
+                  { label:'CHICO',   sound:'hihat', steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'REPIQUE', sound:'snare', steps:[0,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'PIANO',   sound:'kick',  steps:[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'MADERA',  sound:'clave', steps:[0,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'AFRO-CUBANO',desc:'Cuba · rumba conga', tracks:[
+                  { label:'CLAVE',  sound:'clave', steps:[1,0,0,1,0,0,1,0,0,0,1,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CONGA',  sound:'tom',   steps:[0,0,1,0,0,1,0,1,0,0,1,0,0,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'PALMAS', sound:'clap',  steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() }
+                ]}
+              ]
+            },
+            /* ── C. Internacional, Rock, Funk y Groove ── */
+            {
+              label: 'C · Internacional, Rock, Funk y Groove',
+              items: [
+                { name:'ROCK', desc:'Beat clásico de rock', tracks:[
                   { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
                   { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0] },
                   { label:'CHARLES', sound:'hihat', steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:_a0() }
                 ]},
-                { name:'ROCK BRK', desc:'Break con toms', tracks:[
+                { name:'ROCK BRK', desc:'Rock con break de toms', tracks:[
                   { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:_a0() },
                   { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,1,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:_a0() },
                   { label:'TOMS',    sound:'tom',   steps:[0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1], probs:_p100(), accents:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1] }
                 ]},
-                { name:'FUNK', desc:'Groove sincopado', tracks:[
+                { name:'FUNK', desc:'Groove sincopado en dieciséis', tracks:[
                   { label:'BOMBO',   sound:'kick',  steps:[1,0,0,1,0,0,1,0,0,0,1,0,0,1,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
                   { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0] },
                   { label:'CHARLES', sound:'hihat', steps:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
                   { label:'CLAP',    sound:'clap',  steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() }
                 ]},
-                { name:'FUNK BRK', desc:'Corte funky', tracks:[
+                { name:'FUNK BRK', desc:'Corte funky sincopado', tracks:[
                   { label:'BOMBO',   sound:'kick',  steps:[1,0,0,1,0,1,0,0,1,0,0,1,0,0,0,0], probs:_p100(), accents:_a0() },
                   { label:'CAJA',    sound:'snare', steps:[0,0,1,0,1,0,0,1,0,1,0,0,1,0,1,0], probs:_p100(), accents:_a0() },
                   { label:'CHARLES', sound:'hihat', steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:_a0() }
                 ]},
-                { name:'BLUES', desc:'Shuffle de blues', tracks:[
+                { name:'BLUES', desc:'Shuffle de doce compases', tracks:[
                   { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
                   { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0] },
                   { label:'CHARLES', sound:'hihat', steps:[1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1], probs:_p100(), accents:_a0() }
                 ]},
-                { name:'JAZZ', desc:'Ride de swing', tracks:[
+                { name:'JAZZ', desc:'Ride con swing de jazz', tracks:[
                   { label:'RIDE',    sound:'hihat', steps:[1,0,0,1,1,0,1,0,1,0,0,1,1,0,1,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
                   { label:'CHARLES', sound:'hihat', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
                   { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:[100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,60], accents:_a0() }
                 ]},
-                { name:'REGGAE', desc:'One drop', tracks:[
+                { name:'REGGAE', desc:'One drop jamaicano', tracks:[
                   { label:'BOMBO',   sound:'kick',  steps:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
                   { label:'CAJA',    sound:'snare', steps:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
                   { label:'CHARLES', sound:'hihat', steps:[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], probs:_p100(), accents:_a0() }
                 ]},
-                { name:'REGGAE BRK', desc:'Caja a contratiempo', tracks:[
+                { name:'REGGAE BRK', desc:'Reggae con caja contratiempo', tracks:[
                   { label:'BOMBO',   sound:'kick',  steps:[0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
                   { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,1,0,1,0,1,0,0,0,1,0], probs:_p100(), accents:_a0() },
                   { label:'CHARLES', sound:'hihat', steps:[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], probs:_p100(), accents:_a0() }
@@ -7909,15 +8020,266 @@ body:not(.day-mode) .music-controls .btn.icon:hover
                   { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
                   { label:'CAJA',    sound:'snare', steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] }
                 ]},
-                { name:'BOOGIE', desc:'Bombo de ocho corcheas', tracks:[
+                { name:'BOOGIE', desc:'Bombo en corcheas continuas', tracks:[
                   { label:'BOMBO',   sound:'kick',  steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
                   { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
                   { label:'CHARLES', sound:'hihat', steps:[1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1], probs:_p100(), accents:_a0() }
                 ]},
-                { name:'SLOW', desc:'Balada lenta', tracks:[
+                { name:'SLOW', desc:'Balada lenta en cuatro', tracks:[
                   { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
                   { label:'CAJA',    sound:'snare', steps:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
                   { label:'CHARLES', sound:'hihat', steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() }
+                ]}
+              ]
+            },
+            /* ── D. Electrónica y Club ── */
+            {
+              label: 'D · Electrónica y Club',
+              items: [
+                { name:'HOUSE', desc:'Four on the floor clásico', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'CLAP',    sound:'clap',  steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'DEEP HOUSE', desc:'House profundo minimalista', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
+                  { label:'CHARLES', sound:'hihat', steps:[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'CLAVE',   sound:'clave', steps:[0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'TECH HOUSE', desc:'House técnico con hi-hat denso', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] }
+                ]},
+                { name:'TECHNO', desc:'Industrial 4/4 mecánico', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
+                  { label:'CLAP',    sound:'clap',  steps:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CHARLES', sound:'hihat', steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'ACID TECHNO', desc:'Bombo denso y acidulado', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,1,0,0,0,1,0,1,0,0,0,1,0,1,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'DETROIT TECHNO', desc:'Techno espacioso y profundo', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CHARLES', sound:'hihat', steps:[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'TOM',     sound:'tom',   steps:[0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'ELECTRO', desc:'808 estilo clásico electro', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,1,0,0,1,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1], probs:_p100(), accents:_a0() },
+                  { label:'CLAP',    sound:'clap',  steps:[0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'BREAKBEAT', desc:'Beat partido irregular', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'UK GARAGE', desc:'Garage británico shuffleado', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,1], probs:_p100(), accents:_a0() },
+                  { label:'CLAP',    sound:'clap',  steps:[0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'2-STEP', desc:'UK Garage en dos pasos', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'DUB TECHNO', desc:'Techno dub muy espacioso', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CLAVE',   sound:'clave', steps:[1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'TRANCE', desc:'Trance europeo 16/16 hihats', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CLAP',    sound:'clap',  steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'EBM', desc:'Electronic Body Music industrial', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,1,0,1,0,1,0,0,0,1,0,1,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'INDUSTRIAL', desc:'Beat industrial y ruidoso', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1], probs:_p100(), accents:_a0() },
+                  { label:'TOM',     sound:'tom',   steps:[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'MINIMAL', desc:'Techno minimal muy reducido', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
+                  { label:'CLAVE',   sound:'clave', steps:[0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'AMBIENT PULSE', desc:'Pulso ambiental muy disperso', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CLAVE',   sound:'clave', steps:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'HIHAT',   sound:'hihat', steps:[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1], probs:_p100(), accents:_a0() }
+                ]}
+              ]
+            },
+            /* ── E. Drum and Bass y Breaks ── */
+            {
+              label: 'E · Drum and Bass y Breaks',
+              items: [
+                { name:'JUNGLE DnB', desc:'DnB estilo jungle clásico', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0] },
+                  { label:'CHARLES', sound:'hihat', steps:[1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'LIQUID DnB', desc:'DnB líquido suave', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0] },
+                  { label:'CHARLES', sound:'hihat', steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'NEUROFUNK', desc:'DnB técnico y angular', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,1,1,0,1,1,0,1,1,0,1,1,0,1,1,1], probs:_p100(), accents:_a0() },
+                  { label:'TOM',     sound:'tom',   steps:[0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'HALF-STEP', desc:'DnB en medio tiempo', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CHARLES', sound:'hihat', steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'JUMP-UP', desc:'DnB agresivo y bailable', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,1,0,0,1,0,0,0,1,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1], probs:_p100(), accents:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0] },
+                  { label:'CHARLES', sound:'hihat', steps:[1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'DARKSTEP', desc:'DnB oscuro y amenazante', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,1,0,0,0,1,0,1,0,0,1,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'TOM',     sound:'tom',   steps:[0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'AMEN BRK', desc:'Breakbeat clásico acelerado', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0], probs:_p100(), accents:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0] },
+                  { label:'CHARLES', sound:'hihat', steps:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], probs:_p100(), accents:_a0() },
+                  { label:'TOM',     sound:'tom',   steps:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'THINK BRK', desc:'Break de soul en DnB', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,1,0,1,0,0,0,0,0,1,0,0,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'RAGGA DnB', desc:'DnB con sabor dancehall', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'CLAP',    sound:'clap',  steps:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'TECH-STEP', desc:'DnB técnico y mecánico', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,0,1,1,0,1,0,1,1,0,1,1,0,1,0,1], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'DEEP DnB', desc:'DnB atmosférico y profundo', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'CLAVE',   sound:'clave', steps:[1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'ROLANTE DnB', desc:'DnB con hi-hat continuo', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0] },
+                  { label:'CHARLES', sound:'hihat', steps:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'TOM',     sound:'tom',   steps:[0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0], probs:_p100(), accents:_a0() }
+                ]}
+              ]
+            },
+            /* ── F. Hip-Hop y Beats ── */
+            {
+              label: 'F · Hip-Hop y Beats',
+              items: [
+                { name:'BOOM BAP', desc:'Hip-hop clásico de los 90', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0] },
+                  { label:'CHARLES', sound:'hihat', steps:[1,0,0,1,0,0,1,0,1,0,0,1,0,0,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'TRAP', desc:'Beat trap moderno con 808', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CHARLES', sound:'hihat', steps:[1,1,1,0,1,1,1,0,1,1,1,0,1,1,0,1], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'LO-FI HIP HOP', desc:'Hip-hop chill y vinílico', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,0,1,0,0,1,0,0,1,0,1,0,0,1,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'DRILL', desc:'Chicago Drill pesado y lento', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,1,0,0,1,0,0,0,0,1,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CHARLES', sound:'hihat', steps:[1,0,1,1,0,1,0,1,1,0,1,1,0,1,0,1], probs:_p100(), accents:_a0() },
+                  { label:'CLAP',    sound:'clap',  steps:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'CLOUD RAP', desc:'Rap etéreo y minimalista', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'GRIME', desc:'Grime londinense sincopado', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,1,0,0,0,0,1,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'UK DRILL', desc:'Drill británico con slides', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CHARLES', sound:'hihat', steps:[0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CLAP',    sound:'clap',  steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'JERSEY CLUB', desc:'Club de Jersey rapido y percutido', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,1,0,0,0,1,0,1,0,0,0,1,0,1,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CHARLES', sound:'hihat', steps:[1,1,0,1,1,0,1,1,1,1,0,1,1,0,1,1], probs:_p100(), accents:_a0() },
+                  { label:'CLAP',    sound:'clap',  steps:[0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0], probs:_p100(), accents:_a0() }
+                ]}
+              ]
+            },
+            /* ── G. Experimentales y Percusivos ── */
+            {
+              label: 'G · Experimentales y Percusivos',
+              items: [
+                { name:'POLIRRITMO 3:4', desc:'Capas de 3 contra 4 simultáneas', tracks:[
+                  { label:'BOMBO 4',  sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
+                  { label:'CLAVE 3',  sound:'clave', steps:[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CLAP',     sound:'clap',  steps:[0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'AKSAK 7/8', desc:'Ritmo balcánico en 7/8', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,1,0,1,0,0,1,0,0,1,0,1,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CLAVE',   sound:'clave', steps:[1,1,0,1,1,0,1,0,1,1,0,1,1,0,1,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'TABLA TEHAI', desc:'Tihái indio: frase x3 con cadencia', tracks:[
+                  { label:'TABLA',   sound:'tom',   steps:[1,1,0,1,0,0,1,1,0,1,0,0,1,1,0,1], probs:_p100(), accents:[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0] },
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CLAVE',   sound:'clave', steps:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'EUCLIDIANO', desc:'Distribución euclidiana E(5,16)', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,1,0,0,1,0,0,0,1,0,0,1,0,0], probs:_p100(), accents:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CLAVE',   sound:'clave', steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'FLAM GROOVE', desc:'Groove con flamazos y fantasmas', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0], probs:_p100(), accents:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0] },
+                  { label:'GHOST',   sound:'hihat', steps:[0,1,0,0,0,0,1,0,0,1,0,0,0,0,1,0], probs:_p100(), accents:_a0() },
+                  { label:'CLAP',    sound:'clap',  steps:[0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0], probs:_p100(), accents:_a0() }
+                ]},
+                { name:'RUIDO PULSO', desc:'Patrón glitch asimétrico', tracks:[
+                  { label:'BOMBO',   sound:'kick',  steps:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], probs:_p100(), accents:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] },
+                  { label:'CAJA',    sound:'snare', steps:[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1], probs:_p100(), accents:_a0() },
+                  { label:'HIHAT',   sound:'hihat', steps:[1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0], probs:_p100(), accents:_a0() },
+                  { label:'CLAVE',   sound:'clave', steps:[0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1], probs:_p100(), accents:_a0() }
                 ]}
               ]
             }
@@ -9449,6 +9811,8 @@ body:not(.day-mode) .music-controls .btn.icon:hover
               html += '</div></div>';
             });
             container.innerHTML = html;
+            var ejCountEl = document.getElementById('r2EjCount');
+            if (ejCountEl) ejCountEl.textContent = '(' + R2_EJEMPLOS_FLAT.length + ')';
 
             container.querySelectorAll('.r2-ej-btn').forEach(function(btn) {
               btn.addEventListener('click', function() {
