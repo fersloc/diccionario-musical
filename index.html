@@ -17073,7 +17073,7 @@ function renderSeq64() {
     html += '<div class="s64-bib-body" hidden style="padding:0 8px 8px;">';
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">';
     pack.seqs.forEach(function(seq, idx) {
-      var previewNotes = seq.load.split(' ').filter(function(t){ return t !== '_'; }).slice(0, 8).map(function(t){ return t.replace(/[~!?]/g, '').replace(/@d{1,3}$/, ''); }).join(' ');
+      var previewNotes = seq.load.split(' ').filter(function(t){ return t !== '_'; }).slice(0, 8).map(function(t){ return t.replace(/[~!?]/g, '').replace(/@\d{1,3}$/, ''); }).join(' ');
       html += '<div style="background:rgba(255,176,0,.04);border:1px solid rgba(255,176,0,.1);padding:5px 7px;">';
       html += '<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">';
       html += '<span style="font:700 8px \'IBM Plex Mono\',monospace;color:rgba(255,176,0,.45);white-space:nowrap;">SEQ ' + (idx + 1) + '</span>';
@@ -18027,7 +18027,7 @@ function s64BindEvents() {
 function s64LoadBibSeq(bibSeq, btn) {
   var state = seq64State;
   var seq = state.seqs[state.activeSEQ];
-  var tokens = bibSeq.load.split(/s+/);
+  var tokens = bibSeq.load.split(/\s+/);
   var len = Math.min(bibSeq.len, 64);
 
   seq.name = bibSeq.name || seq.name;
@@ -18047,8 +18047,8 @@ function s64LoadBibSeq(bibSeq, btn) {
     var tie = raw.indexOf('~') >= 0;
     var accent = raw.indexOf('!') >= 0;
     var ghost = raw.indexOf('?') >= 0;
-    var velMatch = raw.match(/@(d{1,3})$/);
-    var clean = raw.replace(/[~!?]/g, '').replace(/@d{1,3}$/, '');
+    var velMatch = raw.match(/@(\d{1,3})$/);
+    var clean = raw.replace(/[~!?]/g, '').replace(/@\d{1,3}$/, '');
     var midi = s64NameToMidi(clean);
 
     if (midi >= 0 && midi <= 127) {
