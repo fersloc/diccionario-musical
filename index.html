@@ -14992,8 +14992,32 @@ function s64Tick() {
 
   var step = seq.steps[idx];
   if (step && step.active) {
-    var vel = s64EffectiveVelocity(step);
-    s64PlayNote(step.note, vel, seq.gateLength || 50, state.bpm);
+    var isTieContinuation = false;
+
+    /* No retriggerar steps que continúan una nota ligada en modo forward */
+    if (state.direction === 'forward' && idx > 0) {
+      var prevStep = seq.steps[idx - 1];
+      isTieContinuation = !!(prevStep && prevStep.active && prevStep.tie && prevStep.note === step.note);
+    }
+
+    if (!isTieContinuation) {
+      var chainLen = 1;
+      if (state.direction === 'forward') {
+        var cursor = idx;
+        while (cursor < len - 1) {
+          var currentTieStep = seq.steps[cursor];
+          var nextTieStep = seq.steps[cursor + 1];
+          if (!currentTieStep || !currentTieStep.tie || !nextTieStep || !nextTieStep.active || nextTieStep.note !== step.note) break;
+          chainLen++;
+          cursor++;
+        }
+      }
+
+      var vel = s64EffectiveVelocity(step);
+      var baseGate = Math.max(0.1, Math.min(1, (seq.gateLength || 50) / 100));
+      var tiedGatePct = ((chainLen - 1) + baseGate) * 100;
+      s64PlayNote(step.note, vel, tiedGatePct, state.bpm);
+    }
   }
 
   var _nextTick = (tick + 1) % (state.direction === 'pingpong' ? Math.max(1, len * 2 - 2) : len);
@@ -15049,362 +15073,1695 @@ function s64SetBPM(val) {
   if (seq64State.playing) { clearInterval(seq64State._timer); var ms = (60000 / seq64State.bpm) / seq64State.stepRate; seq64State._timer = setInterval(s64Tick, ms); }
 }
 
-/* ── Biblioteca de ejemplos ── */
+/* Biblioteca 64 SEQ curada. Reemplazar el bloque var S64_BIBLIOTECA completo. */
 var S64_BIBLIOTECA = [
   {
-    id: 'escalas', title: 'Escalas básicas',
-    seqs: [
-      { name: 'C mayor ida/vuelta',  len: 16, load: 'C4 D4 E4 F4 G4 A4 B4 C5 B4 A4 G4 F4 E4 D4 C4 D4' },
-      { name: 'A menor natural',     len: 16, load: 'A3 B3 C4 D4 E4 F4 G4 A4 G4 F4 E4 D4 C4 B3 A3 B3' },
-      { name: 'A menor armónica',    len: 16, load: 'A3 B3 C4 D4 E4 F4 Ab4 A4 Ab4 F4 E4 D4 C4 B3 A3 B3' },
-      { name: 'A menor melódica',    len: 16, load: 'A3 B3 C4 D4 E4 Gb4 Ab4 A4 Ab4 Gb4 E4 D4 C4 B3 A3 B3' },
-      { name: 'C pentatónica mayor', len: 16, load: 'C4 D4 E4 G4 A4 C5 A4 G4 E4 D4 C4 D4 E4 G4 A4 C5' },
-      { name: 'A pentatónica menor', len: 16, load: 'A3 C4 D4 E4 G4 A4 G4 E4 D4 C4 A3 C4 D4 E4 G4 A4' },
-      { name: 'A blues',             len: 16, load: 'A3 C4 D4 Eb4 E4 G4 A4 G4 E4 Eb4 D4 C4 A3 C4 D4 Eb4' },
-      { name: 'C cromática',         len: 16, load: 'C4 Db4 D4 Eb4 E4 F4 Gb4 G4 Ab4 A4 Bb4 B4 C5 B4 Bb4 A4' }
+    "id": "escalas",
+    "title": "Escalas básicas",
+    "seqs": [
+      {
+        "name": "C mayor ida/vuelta",
+        "len": 16,
+        "load": "C4 D4 E4 F4 G4 A4 B4 C5 B4 A4 G4 F4 E4 D4 C4 D4"
+      },
+      {
+        "name": "A menor natural",
+        "len": 16,
+        "load": "A3 B3 C4 D4 E4 F4 G4 A4 G4 F4 E4 D4 C4 B3 A3 B3"
+      },
+      {
+        "name": "A menor armónica",
+        "len": 16,
+        "load": "A3 B3 C4 D4 E4 F4 Ab4 A4 Ab4 F4 E4 D4 C4 B3 A3 B3"
+      },
+      {
+        "name": "A menor melódica",
+        "len": 16,
+        "load": "A3 B3 C4 D4 E4 Gb4 Ab4 A4 Ab4 Gb4 E4 D4 C4 B3 A3 B3"
+      },
+      {
+        "name": "C pentatónica mayor",
+        "len": 16,
+        "load": "C4 D4 E4 G4 A4 C5 A4 G4 E4 D4 C4 D4 E4 G4 A4 C5"
+      },
+      {
+        "name": "A pentatónica menor",
+        "len": 16,
+        "load": "A3 C4 D4 E4 G4 A4 G4 E4 D4 C4 A3 C4 D4 E4 G4 A4"
+      },
+      {
+        "name": "A blues",
+        "len": 16,
+        "load": "A3 C4 D4 Eb4 E4 G4 A4 G4 E4 Eb4 D4 C4 A3 C4 D4 Eb4"
+      },
+      {
+        "name": "C cromática",
+        "len": 16,
+        "load": "C4 Db4 D4 Eb4 E4 F4 Gb4 G4 Ab4 A4 Bb4 B4 C5 B4 Bb4 A4"
+      }
     ]
   },
   {
-    id: 'triadas', title: 'Tríadas mayor/menor',
-    seqs: [
-      { name: 'C mayor chord+arp', len: 16, load: 'C3 C3 E3 G3 C3 G3 E3 C3 C3 C3 E3 G3 C3 G3 E3 C3' },
-      { name: 'C menor chord+arp', len: 16, load: 'C3 C3 Eb3 G3 C3 G3 Eb3 C3 C3 C3 Eb3 G3 C3 G3 Eb3 C3' },
-      { name: 'F mayor chord+arp', len: 16, load: 'F3 F3 A3 C4 F3 C4 A3 F3 F3 F3 A3 C4 F3 C4 A3 F3' },
-      { name: 'F menor chord+arp', len: 16, load: 'F3 F3 Ab3 C4 F3 C4 Ab3 F3 F3 F3 Ab3 C4 F3 C4 Ab3 F3' },
-      { name: 'G mayor chord+arp', len: 16, load: 'G3 G3 B3 D4 G3 D4 B3 G3 G3 G3 B3 D4 G3 D4 B3 G3' },
-      { name: 'G menor chord+arp', len: 16, load: 'G3 G3 Bb3 D4 G3 D4 Bb3 G3 G3 G3 Bb3 D4 G3 D4 Bb3 G3' },
-      { name: 'A mayor chord+arp', len: 16, load: 'A3 A3 Db4 E4 A3 E4 Db4 A3 A3 A3 Db4 E4 A3 E4 Db4 A3' },
-      { name: 'A menor chord+arp', len: 16, load: 'A3 A3 C4 E4 A3 E4 C4 A3 A3 A3 C4 E4 A3 E4 C4 A3' }
+    "id": "triadas",
+    "title": "Tríadas mayor/menor",
+    "seqs": [
+      {
+        "name": "C mayor chord+arp",
+        "len": 16,
+        "load": "C3 C3 E3 G3 C3 G3 E3 C3 C3 C3 E3 G3 C3 G3 E3 C3"
+      },
+      {
+        "name": "C menor chord+arp",
+        "len": 16,
+        "load": "C3 C3 Eb3 G3 C3 G3 Eb3 C3 C3 C3 Eb3 G3 C3 G3 Eb3 C3"
+      },
+      {
+        "name": "F mayor chord+arp",
+        "len": 16,
+        "load": "F3 F3 A3 C4 F3 C4 A3 F3 F3 F3 A3 C4 F3 C4 A3 F3"
+      },
+      {
+        "name": "F menor chord+arp",
+        "len": 16,
+        "load": "F3 F3 Ab3 C4 F3 C4 Ab3 F3 F3 F3 Ab3 C4 F3 C4 Ab3 F3"
+      },
+      {
+        "name": "G mayor chord+arp",
+        "len": 16,
+        "load": "G3 G3 B3 D4 G3 D4 B3 G3 G3 G3 B3 D4 G3 D4 B3 G3"
+      },
+      {
+        "name": "G menor chord+arp",
+        "len": 16,
+        "load": "G3 G3 Bb3 D4 G3 D4 Bb3 G3 G3 G3 Bb3 D4 G3 D4 Bb3 G3"
+      },
+      {
+        "name": "A mayor chord+arp",
+        "len": 16,
+        "load": "A3 A3 Db4 E4 A3 E4 Db4 A3 A3 A3 Db4 E4 A3 E4 Db4 A3"
+      },
+      {
+        "name": "A menor chord+arp",
+        "len": 16,
+        "load": "A3 A3 C4 E4 A3 E4 C4 A3 A3 A3 C4 E4 A3 E4 C4 A3"
+      }
     ]
   },
   {
-    id: 'tristes', title: 'Progresiones tristes',
-    seqs: [
-      { name: 'Am F C G',            len: 32, load: 'A3 E4 C4 E4 A4 E4 C4 E4 F3 C4 A3 C4 F4 C4 A3 C4 C3 G3 E3 G3 C4 G3 E3 G3 G3 D4 B3 D4 G4 D4 B3 D4' },
-      { name: 'Em C G D',            len: 32, load: 'E3 B3 G3 B3 E4 B3 G3 B3 C3 G3 E3 G3 C4 G3 E3 G3 G3 D4 B3 D4 G4 D4 B3 D4 D3 A3 Gb3 A3 D4 A3 Gb3 A3' },
-      { name: 'Dm Bb F C',           len: 32, load: 'D3 A3 F3 A3 D4 A3 F3 A3 Bb3 F4 D4 F4 Bb4 F4 D4 F4 F3 C4 A3 C4 F4 C4 A3 C4 C3 G3 E3 G3 C4 G3 E3 G3' },
-      { name: 'Cm Ab Eb Bb',         len: 32, load: 'C3 G3 Eb3 G3 C4 G3 Eb3 G3 Ab3 Eb4 C4 Eb4 Ab4 Eb4 C4 Eb4 Eb3 Bb3 G3 Bb3 Eb4 Bb3 G3 Bb3 Bb3 F4 D4 F4 Bb4 F4 D4 F4' },
-      { name: 'Fm Db Ab Eb',         len: 32, load: 'F3 C4 Ab3 C4 F4 C4 Ab3 C4 Db3 Ab3 F3 Ab3 Db4 Ab3 F3 Ab3 Ab3 Eb4 C4 Eb4 Ab4 Eb4 C4 Eb4 Eb3 Bb3 G3 Bb3 Eb4 Bb3 G3 Bb3' },
-      { name: 'Bm G D A',            len: 32, load: 'B3 Gb4 D4 Gb4 B4 Gb4 D4 Gb4 G3 D4 B3 D4 G4 D4 B3 D4 D3 A3 Gb3 A3 D4 A3 Gb3 A3 A3 E4 Db4 E4 A4 E4 Db4 E4' },
-      { name: 'C#m A E B',           len: 32, load: 'Db3 Ab3 E3 Ab3 Db4 Ab3 E3 Ab3 A3 E4 Db4 E4 A4 E4 Db4 E4 E3 B3 Ab3 B3 E4 B3 Ab3 B3 B3 Gb4 Eb4 Gb4 B4 Gb4 Eb4 Gb4' },
-      { name: 'Gm Eb Bb F',          len: 32, load: 'G3 D4 Bb3 D4 G4 D4 Bb3 D4 Eb3 Bb3 G3 Bb3 Eb4 Bb3 G3 Bb3 Bb3 F4 D4 F4 Bb4 F4 D4 F4 F3 C4 A3 C4 F4 C4 A3 C4' },
-      { name: 'Am Dm G',             len: 24, load: 'A3 C4 E4 C4 A4 C4 E4 A3 D3 A3 F4 A3 D4 A3 F4 D4 G3 B3 D4 G4 B4 G4 D4 B3' },
-      { name: 'Dm C Bb Am descent',  len: 32, load: 'D3 F3 A3 D4 A3 F3 D3 F3 C3 G3 E3 G3 C4 G3 E3 C3 Bb2 F3 D3 F3 Bb3 F3 D3 F3 A2 E3 C3 E3 A3 E3 C3 A2' },
-      { name: 'Em Bm C G',           len: 32, load: 'E3 B3 G4 B3 E4 B3 G3 E3 B2 Gb3 D4 Gb3 B3 Gb3 D3 B2 C3 E3 G3 C4 G3 E3 C3 G3 G3 B3 D4 G4 D4 B3 G3 B3' },
-      { name: 'Am G F E7 flamenca',  len: 32, load: 'A3 C4 E4 A4 E4 C4 A3 E3 G3 D4 B3 D4 G4 D4 B3 G3 F3 C4 A3 C4 F4 C4 A3 F3 E3 B3 Ab3 B3 E4 B3 Ab3 E3' },
-      { name: 'Cm Gm Ab Bb',         len: 32, load: 'C3 G3 Eb4 G3 C4 G3 Eb3 C3 G2 D3 Bb3 D3 G3 D3 Bb2 G2 Ab2 Eb3 C4 Eb3 Ab3 Eb3 C3 Ab2 Bb2 F3 D3 F3 Bb3 F3 D3 Bb2' },
-      { name: 'Fm Cm Db Ab',         len: 32, load: 'F3 C4 Ab3 F4 C4 Ab3 F3 Ab3 C3 G3 Eb4 G3 C4 Eb3 G3 C3 Db3 Ab3 F3 Ab3 Db4 F3 Ab3 Db3 Ab2 Eb3 C3 Eb3 Ab3 C3 Eb3 Ab2' },
-      { name: 'Dm Bb F C/E',         len: 32, load: 'D3 A3 F3 D4 A3 F3 D4 A3 Bb2 F3 D3 Bb3 F3 D3 Bb3 D3 F2 C3 A3 F3 C3 A3 F3 C3 E2 G3 E3 C4 G3 E3 C4 G3' },
-      { name: 'Am Em F G sparse',    len: 32, load: 'A3 _ E4 _ C4 E4 _ A3 E3 _ B3 _ G3 B3 _ E3 F3 _ C4 _ A3 C4 _ F3 G3 _ D4 _ B3 D4 _ G3' },
-      { name: 'Am/C F/A G/B C',      len: 32, load: 'C3 A3 E4 A3 C4 E4 A3 C3 A2 F3 C4 F3 A3 C4 F3 A2 B2 G3 D4 G3 B3 D4 G3 B2 C3 G3 E4 G3 C4 E4 G3 C3' },
-      { name: 'Bm A G F#7 drama',    len: 32, load: 'B2 Gb3 D4 Gb3 B3 D4 Gb3 B2 A2 E3 Db3 E3 A3 Db4 E3 A2 G2 D3 B3 D3 G3 B3 D3 G2 Gb2 Db3 E3 Bb2 Gb3 E3 Db3 Gb2' },
-      { name: 'Em C Am B modal',     len: 32, load: 'E3 G3 B3 E4 B3 G3 E3 B2 C3 E3 G3 C4 G3 E3 C3 E3 A2 C3 E3 A3 E3 C3 A2 C3 B2 Eb3 Gb3 B3 Gb3 Eb3 B2 Eb3' },
-      { name: 'Ab Fm Db Eb',         len: 32, load: 'Ab3 Eb4 C4 Eb4 Ab4 C4 Eb4 Ab3 F3 C4 Ab3 C4 F4 Ab3 C4 F3 Db3 Ab3 F3 Ab3 Db4 F3 Ab3 Db3 Eb3 Bb3 G3 Bb3 Eb4 G3 Bb3 Eb3' }
+    "id": "tristes",
+    "title": "Progresiones tristes",
+    "seqs": [
+      {
+        "name": "Am F C G",
+        "len": 32,
+        "load": "A3 E4 C4 E4 A4 E4 C4 E4 F3 C4 A3 C4 F4 C4 A3 C4 C3 G3 E3 G3 C4 G3 E3 G3 G3 D4 B3 D4 G4 D4 B3 D4"
+      },
+      {
+        "name": "Em C G D",
+        "len": 32,
+        "load": "E3 B3 G3 B3 E4 B3 G3 B3 C3 G3 E3 G3 C4 G3 E3 G3 G3 D4 B3 D4 G4 D4 B3 D4 D3 A3 Gb3 A3 D4 A3 Gb3 A3"
+      },
+      {
+        "name": "Dm Bb F C",
+        "len": 32,
+        "load": "D3 A3 F3 A3 D4 A3 F3 A3 Bb3 F4 D4 F4 Bb4 F4 D4 F4 F3 C4 A3 C4 F4 C4 A3 C4 C3 G3 E3 G3 C4 G3 E3 G3"
+      },
+      {
+        "name": "Cm Ab Eb Bb",
+        "len": 32,
+        "load": "C3 G3 Eb3 G3 C4 G3 Eb3 G3 Ab3 Eb4 C4 Eb4 Ab4 Eb4 C4 Eb4 Eb3 Bb3 G3 Bb3 Eb4 Bb3 G3 Bb3 Bb3 F4 D4 F4 Bb4 F4 D4 F4"
+      },
+      {
+        "name": "Fm Db Ab Eb",
+        "len": 32,
+        "load": "F3 C4 Ab3 C4 F4 C4 Ab3 C4 Db3 Ab3 F3 Ab3 Db4 Ab3 F3 Ab3 Ab3 Eb4 C4 Eb4 Ab4 Eb4 C4 Eb4 Eb3 Bb3 G3 Bb3 Eb4 Bb3 G3 Bb3"
+      },
+      {
+        "name": "Bm G D A",
+        "len": 32,
+        "load": "B3 Gb4 D4 Gb4 B4 Gb4 D4 Gb4 G3 D4 B3 D4 G4 D4 B3 D4 D3 A3 Gb3 A3 D4 A3 Gb3 A3 A3 E4 Db4 E4 A4 E4 Db4 E4"
+      },
+      {
+        "name": "C#m A E B",
+        "len": 32,
+        "load": "Db3 Ab3 E3 Ab3 Db4 Ab3 E3 Ab3 A3 E4 Db4 E4 A4 E4 Db4 E4 E3 B3 Ab3 B3 E4 B3 Ab3 B3 B3 Gb4 Eb4 Gb4 B4 Gb4 Eb4 Gb4"
+      },
+      {
+        "name": "Gm Eb Bb F",
+        "len": 32,
+        "load": "G3 D4 Bb3 D4 G4 D4 Bb3 D4 Eb3 Bb3 G3 Bb3 Eb4 Bb3 G3 Bb3 Bb3 F4 D4 F4 Bb4 F4 D4 F4 F3 C4 A3 C4 F4 C4 A3 C4"
+      },
+      {
+        "name": "Am Dm G",
+        "len": 24,
+        "load": "A3 C4 E4 C4 A4 C4 E4 A3 D3 A3 F4 A3 D4 A3 F4 D4 G3 B3 D4 G4 B4 G4 D4 B3"
+      },
+      {
+        "name": "Dm C Bb Am descent",
+        "len": 32,
+        "load": "D3 F3 A3 D4 A3 F3 D3 F3 C3 G3 E3 G3 C4 G3 E3 C3 Bb2 F3 D3 F3 Bb3 F3 D3 F3 A2 E3 C3 E3 A3 E3 C3 A2"
+      },
+      {
+        "name": "Em Bm C G",
+        "len": 32,
+        "load": "E3 B3 G4 B3 E4 B3 G3 E3 B2 Gb3 D4 Gb3 B3 Gb3 D3 B2 C3 E3 G3 C4 G3 E3 C3 G3 G3 B3 D4 G4 D4 B3 G3 B3"
+      },
+      {
+        "name": "Am G F E7 flamenca",
+        "len": 32,
+        "load": "A3 C4 E4 A4 E4 C4 A3 E3 G3 D4 B3 D4 G4 D4 B3 G3 F3 C4 A3 C4 F4 C4 A3 F3 E3 B3 Ab3 B3 E4 B3 Ab3 E3"
+      },
+      {
+        "name": "Cm Gm Ab Bb",
+        "len": 32,
+        "load": "C3 G3 Eb4 G3 C4 G3 Eb3 C3 G2 D3 Bb3 D3 G3 D3 Bb2 G2 Ab2 Eb3 C4 Eb3 Ab3 Eb3 C3 Ab2 Bb2 F3 D3 F3 Bb3 F3 D3 Bb2"
+      },
+      {
+        "name": "Fm Cm Db Ab",
+        "len": 32,
+        "load": "F3 C4 Ab3 F4 C4 Ab3 F3 Ab3 C3 G3 Eb4 G3 C4 Eb3 G3 C3 Db3 Ab3 F3 Ab3 Db4 F3 Ab3 Db3 Ab2 Eb3 C3 Eb3 Ab3 C3 Eb3 Ab2"
+      },
+      {
+        "name": "Dm Bb F C/E",
+        "len": 32,
+        "load": "D3 A3 F3 D4 A3 F3 D4 A3 Bb2 F3 D3 Bb3 F3 D3 Bb3 D3 F2 C3 A3 F3 C3 A3 F3 C3 E2 G3 E3 C4 G3 E3 C4 G3"
+      },
+      {
+        "name": "Am Em F G sparse",
+        "len": 32,
+        "load": "A3 _ E4 _ C4 E4 _ A3 E3 _ B3 _ G3 B3 _ E3 F3 _ C4 _ A3 C4 _ F3 G3 _ D4 _ B3 D4 _ G3"
+      },
+      {
+        "name": "Am/C F/A G/B C",
+        "len": 32,
+        "load": "C3 A3 E4 A3 C4 E4 A3 C3 A2 F3 C4 F3 A3 C4 F3 A2 B2 G3 D4 G3 B3 D4 G3 B2 C3 G3 E4 G3 C4 E4 G3 C3"
+      },
+      {
+        "name": "Bm A G F#7 drama",
+        "len": 32,
+        "load": "B2 Gb3 D4 Gb3 B3 D4 Gb3 B2 A2 E3 Db3 E3 A3 Db4 E3 A2 G2 D3 B3 D3 G3 B3 D3 G2 Gb2 Db3 E3 Bb2 Gb3 E3 Db3 Gb2"
+      },
+      {
+        "name": "Em C Am B modal",
+        "len": 32,
+        "load": "E3 G3 B3 E4 B3 G3 E3 B2 C3 E3 G3 C4 G3 E3 C3 E3 A2 C3 E3 A3 E3 C3 A2 C3 B2 Eb3 Gb3 B3 Gb3 Eb3 B2 Eb3"
+      },
+      {
+        "name": "Ab Fm Db Eb",
+        "len": 32,
+        "load": "Ab3 Eb4 C4 Eb4 Ab4 C4 Eb4 Ab3 F3 C4 Ab3 C4 F4 Ab3 C4 F3 Db3 Ab3 F3 Ab3 Db4 F3 Ab3 Db3 Eb3 Bb3 G3 Bb3 Eb4 G3 Bb3 Eb3"
+      }
     ]
   },
   {
-    id: 'acid', title: 'Bajos acid TD-3',
-    seqs: [
-      { name: 'C minor acid',        len: 16, load: 'C2 _ C3 Eb2 _ G2 _ Bb2 C2 _ Eb3 _ G2 C3 _ Bb2' },
-      { name: 'E phrygian bite',     len: 16, load: 'E2 E2 _ F2 _ G2 E3 _ D3 _ C3 _ B2 G2 _ F2' },
-      { name: 'A dark 303',          len: 16, load: 'A1 _ A2 _ C3 E2 _ G2 A2 _ C3 A1 _ E3 _ G2' },
-      { name: 'F# warehouse',        len: 16, load: 'Gb2 _ Db3 Gb2 _ A2 _ E3 Gb2 G2 _ A2 _ Db3 _ E2' },
-      { name: 'D minor rubber',      len: 16, load: 'D2 _ A2 _ F2 _ C3 D3 _ A2 D2 _ F3 _ E3 C3' },
-      { name: 'G minor squelch',     len: 16, load: 'G1 G2 _ Bb2 _ D3 _ F2 G2 _ Bb1 C3 _ D3 _ F3' },
-      { name: 'Bb low crawl',        len: 16, load: 'Bb1 _ Bb2 Db3 _ F2 Ab2 _ Bb1 _ Db2 _ F3 Ab2 _ Bb2' },
-      { name: 'C acid offbeat',      len: 16, load: '_ C2 _ Eb2 G2 _ C3 _ Bb2 C2 _ G2 _ Eb3 D3 _' },
-      { name: 'Eb acid rave',        len: 16, load: 'Eb2 Eb2 Gb2 _ Bb2 _ Eb3 Db3 Bb2 _ Gb2 Eb2 _ Db3 Bb2 _' },
-      { name: 'A minimal hypno',     len: 16, load: 'A1 _ _ A2 _ A2 _ _ A1 C2 _ A2 _ _ E2 _' },
-      { name: 'F# dark industrial',  len: 16, load: 'Gb2 _ B2 _ Gb2 E2 _ A2 _ Gb2 _ Db3 B2 _ _ Gb2' },
-      { name: 'C nocturnal slide',   len: 16, load: 'C2 C2 G2 _ _ Ab2 G2 _ Eb2 _ C3 Bb2 _ G2 _ F2' },
-      { name: 'D old school',        len: 16, load: 'D2 _ D2 Gb2 _ A2 D3 _ D2 _ E2 Gb2 _ A2 E2 _' },
-      { name: 'B acid melancholy',   len: 16, load: 'B1 _ _ D2 _ Gb2 _ _ B1 _ A2 _ G2 _ _ E2' },
-      { name: 'G acid funky',        len: 16, load: '_ G2 G2 _ Bb2 _ D3 G2 _ F3 _ Eb3 D3 Bb2 _ G2' },
-      { name: 'Ab acid deep',        len: 16, load: 'Ab1 _ Ab2 _ C2 _ Eb2 _ Ab2 Gb2 _ Eb2 _ C2 Bb1 _' },
-      { name: 'E acid broken',       len: 16, load: 'E2 _ F2 _ E2 Bb2 _ _ E2 D3 _ B2 _ _ G2 E2' },
-      { name: 'Db acid psychedelic', len: 16, load: 'Db2 _ F2 Bb2 _ Ab2 F2 Db3 _ Bb2 Ab2 _ F2 _ Eb2 Db2' },
-      { name: 'F acid slow burn',    len: 16, load: 'F2 _ _ _ F2 Ab2 _ Eb2 _ _ C3 _ Bb2 _ Ab2 F2' },
-      { name: 'Bb acid raver',       len: 16, load: 'Bb2 Bb2 _ Db3 Bb2 F3 _ Eb3 Db3 Bb2 _ G2 F2 _ Db3 Bb2' },
-      { name: 'C acid mechanical',   len: 16, load: 'C2 Eb2 C2 Eb2 G2 Eb2 C2 _ C2 Eb2 G2 Ab2 _ G2 Eb2 C2' },
-      { name: 'D tension crawl',     len: 16, load: 'D2 _ A2 _ F2 _ C3 Bb2 A2 F2 _ D3 C3 _ A2 _' },
-      { name: 'Ab acid modern',      len: 16, load: 'Ab2 _ B2 Ab2 _ Eb3 _ _ Ab2 G2 _ Eb2 B1 _ Ab2 _' },
-      { name: 'F# acid long',        len: 32, load: 'Gb2 _ _ Db3 Gb2 _ B2 _ _ E3 _ Db3 B2 Gb2 _ _ Gb2 _ A2 _ E3 Gb2 _ _ B2 _ D3 E3 Db3 _ A2 _' },
-      { name: 'C acid atmospheric',  len: 16, load: 'C2 _ _ G2 _ _ Eb3 _ _ Bb2 _ _ G2 _ C3 _' }
+    "id": "acid",
+    "title": "Bajos acid TD-3",
+    "seqs": [
+      {
+        "name": "C minor acid",
+        "len": 16,
+        "load": "C2 _ C3 Eb2 _ G2 _ Bb2 C2 _ Eb3 _ G2 C3 _ Bb2"
+      },
+      {
+        "name": "E phrygian bite",
+        "len": 16,
+        "load": "E2 E2 _ F2 _ G2 E3 _ D3 _ C3 _ B2 G2 _ F2"
+      },
+      {
+        "name": "A dark 303",
+        "len": 16,
+        "load": "A1 _ A2 _ C3 E2 _ G2 A2 _ C3 A1 _ E3 _ G2"
+      },
+      {
+        "name": "F# warehouse",
+        "len": 16,
+        "load": "Gb2 _ Db3 Gb2 _ A2 _ E3 Gb2 G2 _ A2 _ Db3 _ E2"
+      },
+      {
+        "name": "D minor rubber",
+        "len": 16,
+        "load": "D2 _ A2 _ F2 _ C3 D3 _ A2 D2 _ F3 _ E3 C3"
+      },
+      {
+        "name": "G minor squelch",
+        "len": 16,
+        "load": "G1 G2 _ Bb2 _ D3 _ F2 G2 _ Bb1 C3 _ D3 _ F3"
+      },
+      {
+        "name": "Bb low crawl",
+        "len": 16,
+        "load": "Bb1 _ Bb2 Db3 _ F2 Ab2 _ Bb1 _ Db2 _ F3 Ab2 _ Bb2"
+      },
+      {
+        "name": "C acid offbeat",
+        "len": 16,
+        "load": "_ C2 _ Eb2 G2 _ C3 _ Bb2 C2 _ G2 _ Eb3 D3 _"
+      },
+      {
+        "name": "Eb rave spiral",
+        "len": 16,
+        "load": "Eb2! _ Eb2 Gb2 _ Bb2 _ Db3 Eb3 _ Bb2 Gb2 _ F2 Db3 _",
+        "gate": 48
+      },
+      {
+        "name": "A minimal needle",
+        "len": 16,
+        "load": "A1! _ _ A2 _ C2 _ A1 _ E2 _ A2 _ G2 _ _",
+        "gate": 42
+      },
+      {
+        "name": "F# industrial crawl",
+        "len": 16,
+        "load": "Gb1! _ Gb2 _ B1 _ E2 _ Gb2 A2 _ E2 _ Db2 _ Gb1",
+        "gate": 45
+      },
+      {
+        "name": "C nocturnal answer",
+        "len": 32,
+        "load": "C2! _ G2 _ Eb2 _ Bb2 _ C3 _ G2 Ab2 _ G2 _ _ C2 _ Eb3 _ Bb2 _ G2 F2 _ C3 _ Db3 C3 Bb2 _ G2",
+        "gate": 52
+      },
+      {
+        "name": "D rubber shift",
+        "len": 16,
+        "load": "D2! _ A2 D3 _ F2 _ C3 D2 _ E2 F2 _ A2 C3 _",
+        "gate": 50
+      },
+      {
+        "name": "B melancholy acid",
+        "len": 32,
+        "load": "B1! _ D2 _ Gb2 _ A2 _ B2 _ Gb2 E2 _ D2 _ _ B1 _ B2 _ D3 _ A2 Gb2 _ E2 D2 _ B2 _ A1 _",
+        "gate": 55
+      },
+      {
+        "name": "G funky squelch",
+        "len": 16,
+        "load": "_ G2! G2 _ Bb2 _ D3 G2 _ F3 _ Eb3 D3 Bb2 _ G2",
+        "gate": 38
+      },
+      {
+        "name": "Ab deep valve",
+        "len": 16,
+        "load": "Ab1! _ Ab2 _ C2 _ Eb2 _ Ab2 Gb2 _ Eb2 _ C2 Bb1 _",
+        "gate": 58
+      },
+      {
+        "name": "E broken circuit",
+        "len": 16,
+        "load": "E2! _ F2 _ E2 Bb2 _ _ E3 D3 _ B2 _ G2 _ E2",
+        "gate": 40
+      },
+      {
+        "name": "Db psychedelic fold",
+        "len": 32,
+        "load": "Db2! _ F2 _ Bb2 Ab2 _ Db3 _ F2 Eb2 _ Ab2 _ B2 _ Db2 _ Ab2 F2 _ Bb2 Db3 _ C3 Ab2 _ Gb2 F2 _ Eb2 Db2",
+        "gate": 48
+      },
+      {
+        "name": "F slow burn",
+        "len": 32,
+        "load": "F1! _ _ _ F2 _ Ab2 _ Eb2 _ _ C3 _ Bb2 _ _ F1 _ C2 _ F2 _ Eb2 _ Ab2 _ G2 _ F2 _ C3 _",
+        "gate": 64
+      },
+      {
+        "name": "Bb rave response",
+        "len": 16,
+        "load": "Bb2! Bb2 _ Db3 Bb2 F3 _ Eb3 Db3 Bb2 _ G2 F2 _ Db3 Bb2",
+        "gate": 36
+      },
+      {
+        "name": "C mechanical pulse",
+        "len": 16,
+        "load": "C2! Eb2 C2 _ G2 Eb2 C2 _ C3 _ Ab2 G2 _ Eb2 C2 _",
+        "gate": 32
+      },
+      {
+        "name": "D tension coil",
+        "len": 16,
+        "load": "D2! _ A2 _ F2 _ C3 Bb2 A2 F2 _ D3 C3 _ A2 _",
+        "gate": 47
+      },
+      {
+        "name": "Ab modern bite",
+        "len": 16,
+        "load": "Ab2! _ B2 Ab2 _ Eb3 _ B2 Ab2 G2 _ Eb2 B1 _ Ab2 _",
+        "gate": 41
+      },
+      {
+        "name": "F# long-form pressure",
+        "len": 32,
+        "load": "Gb1! _ Db2 _ Gb2 _ B1 _ E2 _ Db3 _ B2 Gb2 _ _ Gb1 _ A1 _ E2 Gb2 _ B2 _ D3 E3 Db3 _ A2 _ Gb2",
+        "gate": 50
+      },
+      {
+        "name": "C atmospheric acid",
+        "len": 32,
+        "load": "C2! _ _ G2 _ Eb3 _ _ Bb2 _ G2 _ C3 _ _ _ C2 _ Ab2 _ G2 _ Eb2 _ Bb1 _ C2 _ G2 _ F2 _",
+        "gate": 68
+      }
     ]
   },
   {
-    id: 'idm', title: 'Arpegios IDM',
-    seqs: [
-      { name: 'C min 7-bit shimmer',   len: 32, load: 'C3 G3 Eb4 _ Bb3 G4 C4 _ Eb3 Bb3 G4 F4 _ C4 G3 Bb4 C3 _ Eb4 G3 Bb3 _ C5 G4 Eb4 C4 _ Bb3 G3 F4 _ C4' },
-      { name: 'F dorian glass',        len: 32, load: 'F3 _ C4 Ab3 Eb4 G4 _ C4 F4 Eb4 _ Ab4 G4 C4 F3 _ F3 G3 Ab3 _ C4 Eb4 F4 G4 _ Ab4 C5 Eb5 _ C5 Ab4 G4' },
-      { name: 'E minor polite glitch', len: 32, load: 'E3 B3 _ G4 Gb4 _ B4 E4 D4 _ G3 B3 E4 _ Gb4 D5 E3 _ G3 B3 _ E4 D4 B3 G4 _ Gb4 E4 _ D4 B3 E5' },
-      { name: 'A harmonic minor toy',  len: 32, load: 'A3 E4 C5 _ Ab4 E4 B4 _ C5 A4 E5 Ab4 _ F4 E4 C5 A3 _ C4 E4 Ab4 B4 _ C5 E5 C5 _ B4 Ab4 E4 C4 A3' },
-      { name: 'D phrygian dark bell',  len: 32, load: 'D3 Eb4 _ A3 F4 D4 C4 _ Eb3 A3 D4 _ F4 Eb4 C4 A3 D3 _ F3 A3 C4 _ D4 Eb4 F4 _ A4 C5 A4 F4 _ D4' },
-      { name: 'G minor floating',      len: 32, load: 'G3 _ D4 Bb4 F4 D5 _ Bb4 G4 F4 _ D4 Bb3 G3 _ F3 G3 Bb3 D4 _ F4 G4 Bb4 _ D5 F5 D5 Bb4 _ G4 F4 D4' },
-      { name: 'Bb lydian-ish',         len: 32, load: 'Bb3 F4 C5 _ E4 F4 A4 _ Bb4 C5 E5 F5 _ C5 A4 F4 Bb3 _ C4 E4 F4 _ A4 Bb4 C5 _ F5 E5 C5 A4 _ Bb4' },
-      { name: 'C# cold machine',       len: 32, load: 'Db3 Ab3 _ E4 B3 Ab4 Db4 _ E3 B3 Ab4 Gb4 _ Db4 Ab3 B4 Db3 _ E4 Ab3 B3 _ Db5 Ab4 E4 Db4 _ B3 Ab3 Gb4 _ Db4' },
-      { name: 'B dim crystal',         len: 32, load: 'B3 F4 _ Ab4 D4 _ B4 F4 B3 _ Ab3 F4 _ D4 B4 Ab4 F4 B3 _ D4 Ab3 _ F4 B4 _ Ab4 D5 B4 F4 _ Ab3 B3' },
-      { name: 'D whole-tone drift',    len: 32, load: 'D4 _ E4 Gb4 _ Ab4 _ Bb4 C5 _ Ab4 Gb4 _ E4 D4 _ D4 C5 _ Bb4 _ Ab4 Gb4 E4 D4 _ C5 Bb4 _ Ab4 Gb4 _' },
-      { name: 'A locrian tension',     len: 32, load: 'A3 _ Bb3 D4 Eb4 _ G4 Bb4 _ A3 C4 _ Eb4 G4 A4 _ Bb3 _ D4 Eb4 _ G3 A3 Bb3 C4 _ Eb4 D4 _ G4 A4 _' },
-      { name: 'Gb minor glitch rain',  len: 32, load: 'Gb3 _ _ B3 E4 _ Db4 _ Gb4 _ D4 A3 _ _ E4 Db4 Gb3 B3 _ _ D4 E4 _ _ A3 Gb4 _ Db5 _ B4 E4 Gb4' },
-      { name: 'C lydian shimmer',      len: 32, load: 'C4 E4 _ Gb4 G4 _ B4 E5 _ C5 A4 _ G4 Gb4 E4 C4 _ E4 B4 _ A4 G4 _ Gb4 E4 C4 E4 _ G4 A4 B4 _' },
-      { name: 'Eb minor signal',       len: 32, load: 'Eb3 _ Bb3 _ Gb4 Eb4 _ Bb4 _ Gb3 Eb3 _ Db4 Bb3 _ Gb4 Eb3 Bb3 Gb3 _ _ Eb4 _ Db4 Gb4 Bb3 _ Eb5 _ Db5 Bb4 _' },
-      { name: 'G dorian fragments',    len: 32, load: 'G3 _ _ D4 Bb3 E4 _ A3 G4 _ _ F4 D4 A4 Bb3 _ G3 E4 D4 _ A3 _ F4 Bb3 G4 _ D5 _ A4 E4 F4 _' },
-      { name: 'D minor shatter',       len: 32, load: 'D3 A3 _ F4 _ Bb3 _ C4 D4 A4 _ F3 E4 _ D4 A3 _ D3 _ Bb4 A3 C4 _ F4 D4 _ A4 C5 _ Bb4 F4 A3' },
-      { name: 'Bb minor spatial',      len: 32, load: 'Bb3 _ F4 _ Db5 _ Ab4 Gb4 _ F4 Eb4 Db4 _ _ C4 Bb3 _ Gb3 _ Bb3 Db4 _ F4 _ Ab4 Bb4 _ Eb5 _ Db5 Ab4 _' },
-      { name: 'C minor cold pulse',    len: 32, load: 'C4 _ C4 _ Eb4 _ C4 G4 _ Eb4 _ C4 Bb3 _ _ G3 C4 _ Eb4 G4 Eb4 _ C4 _ Bb3 G3 _ Eb4 C4 Bb3 _ G3' },
-      { name: 'A minor digital maze',  len: 32, load: 'A3 _ E4 _ C5 B4 _ G4 F4 _ E4 D4 C4 _ B3 A3 _ C4 E4 _ G4 A4 _ F4 _ E4 _ C5 B4 G4 _ A4' },
-      { name: 'E major IDM shimmer',   len: 32, load: 'E4 _ B4 Gb4 _ Gb4 B4 E5 _ Db5 B4 _ Ab4 _ Gb4 E4 _ B3 E4 Gb4 _ Ab4 B4 _ E5 _ Db5 Ab4 Gb4 E4 _ B4' },
-      { name: 'Ab dim web',            len: 32, load: 'Ab3 _ B3 D4 _ F4 Ab4 _ B4 _ D5 F4 _ Ab3 G3 _ E3 D3 _ B3 F4 D4 Ab3 _ B3 E4 _ D4 Ab4 _ F4 G3' },
-      { name: 'A dorian symmetric',    len: 32, load: 'A3 C4 E4 Gb4 _ E4 G4 A4 E4 C4 _ A3 G3 Gb3 _ A3 C4 E4 _ Gb4 E4 G4 A4 _ C5 E5 _ Gb4 E4 G4 A4 _' },
-      { name: 'Db mixolydian pulse',   len: 32, load: 'Db4 _ Eb4 F4 _ Ab4 Bb4 _ B4 _ Ab4 Gb4 F4 _ Eb4 Db4 _ F4 Ab4 _ B4 _ Bb4 Ab4 Gb4 _ F4 Eb4 Db4 _ B4 Ab4' },
-      { name: 'Gb lydian light',       len: 32, load: 'Gb3 _ Ab3 Bb3 C4 _ Eb4 F4 Gb4 _ Db4 _ Bb3 Ab3 _ Gb3 _ C4 Eb4 _ F4 Gb4 Ab4 _ Bb4 C5 _ Db5 _ Eb5 F5 Gb4' },
-      { name: 'Db phrygian cold',      len: 32, load: 'Db3 D3 _ Gb3 _ Ab3 B3 Db4 D4 _ Gb4 Ab4 _ B3 Db4 _ Db3 _ B3 Ab3 Gb3 D3 Db3 _ D4 Gb4 _ Ab4 B4 Db5 _ _' }
+    "id": "idm",
+    "title": "Arpegios IDM",
+    "seqs": [
+      {
+        "name": "C min 7-bit shimmer",
+        "len": 32,
+        "load": "C3 G3 Eb4 _ Bb3 G4 C4 _ Eb3 Bb3 G4 F4 _ C4 G3 Bb4 C3 _ Eb4 G3 Bb3 _ C5 G4 Eb4 C4 _ Bb3 G3 F4 _ C4"
+      },
+      {
+        "name": "F dorian glass",
+        "len": 32,
+        "load": "F3 _ C4 Ab3 Eb4 G4 _ C4 F4 Eb4 _ Ab4 G4 C4 F3 _ F3 G3 Ab3 _ C4 Eb4 F4 G4 _ Ab4 C5 Eb5 _ C5 Ab4 G4"
+      },
+      {
+        "name": "E minor polite glitch",
+        "len": 32,
+        "load": "E3 B3 _ G4 Gb4 _ B4 E4 D4 _ G3 B3 E4 _ Gb4 D5 E3 _ G3 B3 _ E4 D4 B3 G4 _ Gb4 E4 _ D4 B3 E5"
+      },
+      {
+        "name": "A harmonic minor toy",
+        "len": 32,
+        "load": "A3 E4 C5 _ Ab4 E4 B4 _ C5 A4 E5 Ab4 _ F4 E4 C5 A3 _ C4 E4 Ab4 B4 _ C5 E5 C5 _ B4 Ab4 E4 C4 A3"
+      },
+      {
+        "name": "D phrygian dark bell",
+        "len": 32,
+        "load": "D3 Eb4 _ A3 F4 D4 C4 _ Eb3 A3 D4 _ F4 Eb4 C4 A3 D3 _ F3 A3 C4 _ D4 Eb4 F4 _ A4 C5 A4 F4 _ D4"
+      },
+      {
+        "name": "G minor floating",
+        "len": 32,
+        "load": "G3 _ D4 Bb4 F4 D5 _ Bb4 G4 F4 _ D4 Bb3 G3 _ F3 G3 Bb3 D4 _ F4 G4 Bb4 _ D5 F5 D5 Bb4 _ G4 F4 D4"
+      },
+      {
+        "name": "Bb lydian-ish",
+        "len": 32,
+        "load": "Bb3 F4 C5 _ E4 F4 A4 _ Bb4 C5 E5 F5 _ C5 A4 F4 Bb3 _ C4 E4 F4 _ A4 Bb4 C5 _ F5 E5 C5 A4 _ Bb4"
+      },
+      {
+        "name": "C# cold machine",
+        "len": 32,
+        "load": "Db3 Ab3 _ E4 B3 Ab4 Db4 _ E3 B3 Ab4 Gb4 _ Db4 Ab3 B4 Db3 _ E4 Ab3 B3 _ Db5 Ab4 E4 Db4 _ B3 Ab3 Gb4 _ Db4"
+      },
+      {
+        "name": "B diminished crystal",
+        "len": 32,
+        "load": "B3! _ F4 D4 _ Ab4 B4 _ F4 _ D5 Ab4 _ B3 F4 _ D4 _ Ab3 B3 _ F4 D5 _ Ab4 F4 _ B4 D5 _ Ab4 _",
+        "gate": 44
+      },
+      {
+        "name": "D whole-tone drift",
+        "len": 32,
+        "load": "D4 _ A4 E4 _ Ab4 Bb4 _ E5 _ C5 Ab4 _ Gb4 E4 _ D4 _ Gb4 Bb4 _ C5 Ab4 _ E4 Bb4 _ Gb5 E5 _ C5 _",
+        "gate": 56
+      },
+      {
+        "name": "A locrian hinge",
+        "len": 32,
+        "load": "A3! Bb3 _ Eb4 D4 _ G4 A4 _ C4 Eb4 _ Bb3 G3 _ A3 _ Eb4 G4 Bb4 A4 _ D4 C4 _ G3 Bb3 Eb4 _ D4 A3 _",
+        "gate": 46
+      },
+      {
+        "name": "Gb minor rain grid",
+        "len": 32,
+        "load": "Gb3 _ Db4 _ A4 _ E4 Db4 _ B3 Gb4 _ D4 A3 _ E4 Gb3 B3 _ Db4 _ A4 E4 _ D5 _ Db5 A4 _ E4 B3 _",
+        "gate": 42
+      },
+      {
+        "name": "C lydian glass",
+        "len": 32,
+        "load": "C4! _ Gb4 E4 _ B4 G4 _ D5 _ A4 Gb4 _ E4 C4 _ G4 B4 _ D5 _ C5 A4 _ Gb4 E4 _ B3 D4 _ C4 _",
+        "gate": 50
+      },
+      {
+        "name": "Eb minor broken signal",
+        "len": 32,
+        "load": "Eb3 _ Bb3 Gb4 _ Db4 Eb4 _ A3 _ Bb4 Gb4 _ F4 Db4 _ Eb3 Gb3 _ B3 Bb3 _ Db4 _ Gb4 F4 _ Eb5 Db5 _ Bb4 _",
+        "gate": 43
+      },
+      {
+        "name": "G dorian rotating cell",
+        "len": 32,
+        "load": "G3! _ D4 Bb3 E4 _ A3 G4 _ F4 D4 _ Bb3 E4 _ A4 G3 D4 _ F4 _ A4 Bb4 _ E4 D5 _ A3 F4 _ G4 _",
+        "gate": 45
+      },
+      {
+        "name": "D minor fracture",
+        "len": 32,
+        "load": "D3 _ A3 F4 _ Bb3 C4 _ E4 _ D4 A3 _ F3 C4 _ D3 Bb3 _ A4 F4 _ E4 _ C5 A4 _ D4 Bb4 _ F4 _",
+        "gate": 40
+      },
+      {
+        "name": "Bb minor suspended space",
+        "len": 32,
+        "load": "Bb3! _ F4 _ Db5 _ Ab4 Gb4 _ Eb4 F4 _ C4 Bb3 _ _ Gb3 _ Db4 F4 _ Ab4 Bb4 _ Eb5 _ Db5 Ab4 _ F4 C4 _",
+        "gate": 58
+      },
+      {
+        "name": "C minor cold pulse",
+        "len": 32,
+        "load": "C4! _ _ G4 Eb4 _ C5 _ Bb4 _ G4 Eb4 _ C4 _ _ C4 _ Ab4 G4 _ Eb5 C5 _ Bb3 _ G4 F4 Eb4 _ C4 _",
+        "gate": 48
+      },
+      {
+        "name": "A minor digital maze",
+        "len": 32,
+        "load": "A3 _ E4 C5 _ B4 G4 _ F4 E4 _ C4 B3 _ A3 _ C4 _ G4 E5 _ A4 F4 _ D5 C5 _ B4 G4 _ A4 _",
+        "gate": 44
+      },
+      {
+        "name": "E major luminous fault",
+        "len": 32,
+        "load": "E4! _ B4 Gb4 _ Ab4 Db5 _ B4 _ E5 Ab4 _ Gb4 E4 _ B3 _ E4 B4 Db5 _ Ab4 _ E5 B4 _ Gb5 Db5 _ E5 _",
+        "gate": 52
+      },
+      {
+        "name": "Ab diminished lattice",
+        "len": 32,
+        "load": "Ab3 _ B3 F4 _ D4 Ab4 _ B4 _ F5 D5 _ Ab4 B3 _ F4 _ Ab3 D4 B3 _ F4 _ D5 Ab4 _ B4 F5 _ D5 _",
+        "gate": 41
+      },
+      {
+        "name": "A dorian mirror",
+        "len": 32,
+        "load": "A3! C4 E4 _ Gb4 _ E4 G4 A4 _ C5 E5 _ Gb5 E5 _ A4 _ G4 E4 Gb4 _ C4 A3 _ E4 C5 _ G4 Gb4 _ A4",
+        "gate": 49
+      },
+      {
+        "name": "Db mixolydian offset",
+        "len": 32,
+        "load": "Db4 _ Ab4 F4 _ B4 Bb4 _ Eb5 _ Ab4 Gb4 _ F4 Db4 _ Ab3 _ Eb4 B4 _ Bb4 F4 _ Db5 Ab4 _ Eb5 B4 _ Gb4 _",
+        "gate": 47
+      },
+      {
+        "name": "Gb lydian halo",
+        "len": 32,
+        "load": "Gb3! _ C4 Bb3 _ Eb4 Ab4 _ F4 _ C5 Eb5 _ Db5 Bb4 _ Gb4 _ Ab3 C4 Eb4 _ F4 _ Bb4 C5 _ Eb5 Db5 _ Gb4 _",
+        "gate": 55
+      },
+      {
+        "name": "Db phrygian cold line",
+        "len": 32,
+        "load": "Db3! D3 _ Ab3 Gb3 _ B3 Db4 _ D4 Ab4 _ Gb4 B3 _ Db4 _ Ab3 D4 Gb4 B4 _ Db5 _ Ab4 Gb4 _ D4 B3 _ Db4 _",
+        "gate": 45
+      }
     ]
   },
   {
-    id: 'dnb', title: 'Frases DnB oscuras',
-    seqs: [
-      { name: 'C minor reese',     len: 32, load: 'C2 _ _ C2 Eb2 _ G2 _ _ Bb1 _ C2 _ G1 Bb1 _ C2 _ Eb2 _ G2 _ _ Bb2 _ C3 _ Bb2 G2 _ Eb2 _' },
-      { name: 'F dark roller',     len: 32, load: 'F1 _ F2 _ _ Ab2 _ C3 Eb2 _ _ F2 _ C2 _ _ F1 _ _ Ab1 C2 _ Eb2 _ _ F2 G2 _ Ab2 _ C3 _' },
-      { name: 'E halfstep',        len: 32, load: 'E1 _ _ _ E2 _ G2 _ B1 _ _ D2 _ _ E2 _ E1 _ F2 _ G2 _ _ B2 _ D3 _ B2 G2 _ _ _' },
-      { name: 'D minor break',     len: 32, load: 'D2 _ A1 D2 _ F2 _ _ C3 _ A2 _ D3 _ _ C2 D2 _ _ F1 A1 _ C2 _ D2 _ F2 _ E2 C2 _ _' },
-      { name: 'G minor neuro',     len: 32, load: 'G1 _ _ G2 Bb1 _ D2 _ F2 _ G2 _ _ D2 _ F1 G1 _ Bb1 _ D2 _ _ F2 G2 _ Bb2 _ D3 _ F2 _' },
-      { name: 'Bb sub question',   len: 32, load: 'Bb1 _ F2 _ Db2 _ _ Ab1 _ Bb1 _ Db2 F2 _ _ _ Bb1 _ _ Ab1 F1 _ Db2 _ Bb2 _ Ab2 _ F2 _ Db2 _' },
-      { name: 'C# black ice',      len: 32, load: 'Db2 _ _ Db2 E2 _ Ab2 _ _ B1 _ Db2 _ Ab1 B1 _ Db2 _ E2 _ Ab2 _ _ B2 _ Db3 _ B2 Ab2 _ E2 _' },
-      { name: 'A minor night',     len: 32, load: 'A1 _ A2 _ C2 _ E2 _ G2 _ _ A2 _ E2 _ _ A1 _ _ C2 E2 _ G2 _ _ A2 B2 _ C3 _ E3 _' },
-      { name: 'Eb atmospheric',    len: 32, load: 'Eb2 _ _ Bb2 _ Gb2 _ _ Eb2 _ _ Bb1 _ Db2 _ _ Eb2 _ Gb2 _ _ Bb2 _ Eb3 _ Db3 _ Bb2 _ Gb2 _ _' },
-      { name: 'F# neuro tech',     len: 32, load: 'Gb1 _ Gb2 _ _ B2 _ _ Gb2 E2 _ Db2 _ _ B1 _ Gb1 _ _ Db2 B1 Gb2 _ _ E2 _ B2 _ E3 Db3 _ _' },
-      { name: 'D liquid dark',     len: 32, load: 'D2 _ F2 _ A2 F2 D2 _ _ C3 A2 _ F2 _ _ D2 D2 _ _ F2 A2 _ _ E3 C3 A2 _ F2 _ D2 _ _' },
-      { name: 'Ab industrial sub', len: 32, load: 'Ab1 _ _ Ab2 _ _ Eb2 _ _ Ab1 Db2 _ _ Gb2 _ _ Ab1 _ _ C2 _ Eb2 _ _ Ab2 Gb2 Eb2 _ Db2 _ Ab1 _' },
-      { name: 'E minor dystopic',  len: 32, load: 'E1 _ _ E2 _ G2 _ _ D3 _ B2 _ G2 _ _ E2 E1 _ _ D2 _ B1 _ _ G2 _ E2 D2 B1 _ G1 _' },
-      { name: 'C minor futurist',  len: 32, load: 'C2 _ G2 _ _ Eb3 _ C3 Bb2 _ _ G1 _ Eb2 _ _ C2 _ F2 _ Bb2 _ _ G2 Eb2 _ _ Db3 C3 G2 _ _' },
-      { name: 'Bb half-time deep', len: 32, load: 'Bb1 _ _ _ Bb2 _ _ F2 _ _ Bb1 _ _ Db2 _ _ Bb1 _ _ Ab2 _ F2 _ _ Bb2 _ _ Eb2 Db2 _ _ _' }
+    "id": "dnb",
+    "title": "Frases DnB oscuras",
+    "seqs": [
+      {
+        "name": "C minor reese",
+        "len": 32,
+        "load": "C2 _ _ C2 Eb2 _ G2 _ _ Bb1 _ C2 _ G1 Bb1 _ C2 _ Eb2 _ G2 _ _ Bb2 _ C3 _ Bb2 G2 _ Eb2 _"
+      },
+      {
+        "name": "F dark roller",
+        "len": 32,
+        "load": "F1 _ F2 _ _ Ab2 _ C3 Eb2 _ _ F2 _ C2 _ _ F1 _ _ Ab1 C2 _ Eb2 _ _ F2 G2 _ Ab2 _ C3 _"
+      },
+      {
+        "name": "E halfstep",
+        "len": 32,
+        "load": "E1 _ _ _ E2 _ G2 _ B1 _ _ D2 _ _ E2 _ E1 _ F2 _ G2 _ _ B2 _ D3 _ B2 G2 _ _ _"
+      },
+      {
+        "name": "D minor break",
+        "len": 32,
+        "load": "D2 _ A1 D2 _ F2 _ _ C3 _ A2 _ D3 _ _ C2 D2 _ _ F1 A1 _ C2 _ D2 _ F2 _ E2 C2 _ _"
+      },
+      {
+        "name": "G minor neuro",
+        "len": 32,
+        "load": "G1 _ _ G2 Bb1 _ D2 _ F2 _ G2 _ _ D2 _ F1 G1 _ Bb1 _ D2 _ _ F2 G2 _ Bb2 _ D3 _ F2 _"
+      },
+      {
+        "name": "Bb sub question",
+        "len": 32,
+        "load": "Bb1 _ F2 _ Db2 _ _ Ab1 _ Bb1 _ Db2 F2 _ _ _ Bb1 _ _ Ab1 F1 _ Db2 _ Bb2 _ Ab2 _ F2 _ Db2 _"
+      },
+      {
+        "name": "C# black ice",
+        "len": 32,
+        "load": "Db2 _ _ Db2 E2 _ Ab2 _ _ B1 _ Db2 _ Ab1 B1 _ Db2 _ E2 _ Ab2 _ _ B2 _ Db3 _ B2 Ab2 _ E2 _"
+      },
+      {
+        "name": "A minor night",
+        "len": 32,
+        "load": "A1 _ A2 _ C2 _ E2 _ G2 _ _ A2 _ E2 _ _ A1 _ _ C2 E2 _ G2 _ _ A2 B2 _ C3 _ E3 _"
+      },
+      {
+        "name": "Eb atmospheric",
+        "len": 32,
+        "load": "Eb2 _ _ Bb2 _ Gb2 _ _ Eb2 _ _ Bb1 _ Db2 _ _ Eb2 _ Gb2 _ _ Bb2 _ Eb3 _ Db3 _ Bb2 _ Gb2 _ _"
+      },
+      {
+        "name": "F# neuro tech",
+        "len": 32,
+        "load": "Gb1 _ Gb2 _ _ B2 _ _ Gb2 E2 _ Db2 _ _ B1 _ Gb1 _ _ Db2 B1 Gb2 _ _ E2 _ B2 _ E3 Db3 _ _"
+      },
+      {
+        "name": "D liquid dark",
+        "len": 32,
+        "load": "D2 _ F2 _ A2 F2 D2 _ _ C3 A2 _ F2 _ _ D2 D2 _ _ F2 A2 _ _ E3 C3 A2 _ F2 _ D2 _ _"
+      },
+      {
+        "name": "Ab industrial sub",
+        "len": 32,
+        "load": "Ab1 _ _ Ab2 _ _ Eb2 _ _ Ab1 Db2 _ _ Gb2 _ _ Ab1 _ _ C2 _ Eb2 _ _ Ab2 Gb2 Eb2 _ Db2 _ Ab1 _"
+      },
+      {
+        "name": "E minor dystopic",
+        "len": 32,
+        "load": "E1 _ _ E2 _ G2 _ _ D3 _ B2 _ G2 _ _ E2 E1 _ _ D2 _ B1 _ _ G2 _ E2 D2 B1 _ G1 _"
+      },
+      {
+        "name": "C minor futurist",
+        "len": 32,
+        "load": "C2 _ G2 _ _ Eb3 _ C3 Bb2 _ _ G1 _ Eb2 _ _ C2 _ F2 _ Bb2 _ _ G2 Eb2 _ _ Db3 C3 G2 _ _"
+      },
+      {
+        "name": "Bb half-time deep",
+        "len": 32,
+        "load": "Bb1 _ _ _ Bb2 _ _ F2 _ _ Bb1 _ _ Db2 _ _ Bb1 _ _ Ab2 _ F2 _ _ Bb2 _ _ Eb2 Db2 _ _ _"
+      }
     ]
   },
   {
-    id: 'dark_scales', title: 'Escalas oscuras',
-    seqs: [
-      { name: 'C Persian Descent',          len: 16, load: 'C5 B4 Ab4 Gb4 F4 E4 Db4 C4 B3 Ab3 Gb3 F3 E3 Db3 C3 B2' },
-      { name: 'D Hungarian Minor Spiral',   len: 16, load: 'D4 E4 F4 Ab4 A4 Bb4 Db5 D5 _ Db5 Bb4 A4 Ab4 F4 E4 D4' },
-      { name: 'E Double Harmonic Ascent',   len: 16, load: 'E3 F3 Ab3 A3 B3 C4 Eb4 E4 Eb4 C4 B3 A3 Ab3 F3 E3 _' },
-      { name: 'F Phrygian Dominant Ritual', len: 16, load: 'F3 _ Gb3 A3 Bb3 _ C4 Db4 Eb4 _ C4 Bb3 A3 Gb3 F3 Eb3' },
-      { name: 'A Neapolitan Minor Shadow',  len: 16, load: 'A3 Bb3 C4 D4 E4 F4 Ab4 A4 _ Ab4 F4 E4 D4 C4 Bb3 A3' },
-      { name: 'G Harmonic Minor Vault',     len: 16, load: 'G3 A3 Bb3 C4 D4 Eb4 Gb4 G4 Gb4 Eb4 D4 C4 Bb3 A3 G3 _' },
-      { name: 'C Locrian Abyss',            len: 16, load: 'C4 _ Db4 Eb4 _ Gb4 Ab4 Bb4 C5 _ Bb4 Ab4 Gb4 F4 Eb4 Db4' },
-      { name: 'B Persian Dark Fall',        len: 16, load: 'B3 C4 Eb4 E4 F4 G4 Bb4 B4 _ Bb4 G4 F4 E4 Eb4 C4 B3' },
-      { name: 'D Diminished Web',           len: 16, load: 'D4 E4 F4 G4 Ab4 Bb4 B4 Db5 D5 _ B4 Ab4 G4 F4 E4 D4' },
-      { name: 'F Hungarian Minor Pulse',    len: 32, load: 'F3 _ G3 Ab3 B3 _ C4 Db4 E4 _ F4 E4 _ Db4 C4 B3 Ab3 G3 F3 _ B3 _ Db4 E4 F4 _ E4 Db4 B3 Ab3 G3 F3' },
-      { name: 'Eb Phrygian Dominant Dark',  len: 16, load: 'Eb3 E3 G3 Ab3 Bb3 B3 Db4 Eb4 _ Db4 B3 Bb3 Ab3 G3 E3 Eb3' },
-      { name: 'A Double Harmonic Motion',   len: 32, load: 'A3 Bb3 _ Db4 D4 E4 _ F4 Ab4 A4 _ F4 E4 D4 Db4 _ Bb3 A3 _ Db4 E4 F4 _ Ab4 A4 F4 E4 D4 Db4 Bb3 _ A3' },
-      { name: 'Db Neapolitan Minor',        len: 16, load: 'Db4 D4 E4 Gb4 Ab4 A4 C5 Db5 _ C5 A4 Ab4 Gb4 E4 D4 Db4' },
-      { name: 'G Locrian Drift',            len: 32, load: 'G3 _ Ab3 Bb3 _ C4 Db4 _ Eb4 F4 G4 _ F4 Eb4 _ Db4 C4 Bb3 Ab3 _ G3 _ Bb3 Db4 _ Eb4 F4 G4 _ Eb4 Db4 _' },
-      { name: 'B Harmonic Minor Labyrinth', len: 32, load: 'B3 Db4 D4 E4 Gb4 G4 Bb4 B4 _ Bb4 G4 Gb4 E4 D4 Db4 B3 B3 _ Db4 _ E4 Gb4 G4 Bb4 B4 _ G4 Gb4 E4 D4 Db4 B3' },
-      { name: 'F Whole Tone Void',          len: 16, load: 'F4 G4 A4 B4 Db5 Eb5 F5 _ Eb5 Db5 B4 A4 G4 F4 Eb4 Db4' },
-      { name: 'D Persian Echo',             len: 32, load: 'D4 _ Eb4 Gb4 G4 _ Ab4 Bb4 Db5 D5 _ Db5 Bb4 Ab4 G4 Gb4 Eb4 D4 _ Gb4 Ab4 _ Db5 D5 _ Bb4 Ab4 G4 Gb4 Eb4 D4 _' },
-      { name: 'C Hungarian Minor Ascent',   len: 16, load: 'C4 D4 Eb4 Gb4 G4 Ab4 B4 C5 B4 Ab4 G4 Gb4 Eb4 D4 C4 B3' },
-      { name: 'Bb Double Harmonic Dance',   len: 16, load: 'Bb3 B3 D4 Eb4 F4 Gb4 A4 Bb4 A4 Gb4 F4 Eb4 D4 B3 Bb3 _' },
-      { name: 'E Neapolitan Minor Tragedy', len: 32, load: 'E3 F3 G3 A3 B3 C4 Eb4 E4 _ C4 B3 A3 G3 F3 E3 _ E3 _ F3 G3 A3 _ B3 C4 _ Eb4 E4 C4 _ B3 A3 G3' }
+    "id": "dark_scales",
+    "title": "Escalas oscuras",
+    "seqs": [
+      {
+        "name": "C Persian Descent",
+        "len": 16,
+        "load": "C5 B4 Ab4 Gb4 F4 E4 Db4 C4 B3 Ab3 Gb3 F3 E3 Db3 C3 B2"
+      },
+      {
+        "name": "D Hungarian Minor Spiral",
+        "len": 16,
+        "load": "D4 E4 F4 Ab4 A4 Bb4 Db5 D5 _ Db5 Bb4 A4 Ab4 F4 E4 D4"
+      },
+      {
+        "name": "E Double Harmonic Ascent",
+        "len": 16,
+        "load": "E3 F3 Ab3 A3 B3 C4 Eb4 E4 Eb4 C4 B3 A3 Ab3 F3 E3 _"
+      },
+      {
+        "name": "F Phrygian Dominant Ritual",
+        "len": 16,
+        "load": "F3 _ Gb3 A3 Bb3 _ C4 Db4 Eb4 _ C4 Bb3 A3 Gb3 F3 Eb3"
+      },
+      {
+        "name": "A Neapolitan Minor Shadow",
+        "len": 16,
+        "load": "A3 Bb3 C4 D4 E4 F4 Ab4 A4 _ Ab4 F4 E4 D4 C4 Bb3 A3"
+      },
+      {
+        "name": "G Harmonic Minor Vault",
+        "len": 16,
+        "load": "G3 A3 Bb3 C4 D4 Eb4 Gb4 G4 Gb4 Eb4 D4 C4 Bb3 A3 G3 _"
+      },
+      {
+        "name": "C Locrian Abyss",
+        "len": 16,
+        "load": "C4 _ Db4 Eb4 _ Gb4 Ab4 Bb4 C5 _ Bb4 Ab4 Gb4 F4 Eb4 Db4"
+      },
+      {
+        "name": "B Persian Dark Fall",
+        "len": 16,
+        "load": "B3 C4 Eb4 E4 F4 G4 Bb4 B4 _ Bb4 G4 F4 E4 Eb4 C4 B3"
+      },
+      {
+        "name": "D Diminished Web",
+        "len": 16,
+        "load": "D4 E4 F4 G4 Ab4 Bb4 B4 Db5 D5 _ B4 Ab4 G4 F4 E4 D4"
+      },
+      {
+        "name": "F Hungarian Minor Pulse",
+        "len": 32,
+        "load": "F3 _ G3 Ab3 B3 _ C4 Db4 E4 _ F4 E4 _ Db4 C4 B3 Ab3 G3 F3 _ B3 _ Db4 E4 F4 _ E4 Db4 B3 Ab3 G3 F3"
+      },
+      {
+        "name": "Eb Phrygian Dominant Dark",
+        "len": 16,
+        "load": "Eb3 E3 G3 Ab3 Bb3 B3 Db4 Eb4 _ Db4 B3 Bb3 Ab3 G3 E3 Eb3"
+      },
+      {
+        "name": "A Double Harmonic Motion",
+        "len": 32,
+        "load": "A3 Bb3 _ Db4 D4 E4 _ F4 Ab4 A4 _ F4 E4 D4 Db4 _ Bb3 A3 _ Db4 E4 F4 _ Ab4 A4 F4 E4 D4 Db4 Bb3 _ A3"
+      },
+      {
+        "name": "Db Neapolitan Minor",
+        "len": 16,
+        "load": "Db4 D4 E4 Gb4 Ab4 A4 C5 Db5 _ C5 A4 Ab4 Gb4 E4 D4 Db4"
+      },
+      {
+        "name": "G Locrian Drift",
+        "len": 32,
+        "load": "G3 _ Ab3 Bb3 _ C4 Db4 _ Eb4 F4 G4 _ F4 Eb4 _ Db4 C4 Bb3 Ab3 _ G3 _ Bb3 Db4 _ Eb4 F4 G4 _ Eb4 Db4 _"
+      },
+      {
+        "name": "B Harmonic Minor Labyrinth",
+        "len": 32,
+        "load": "B3 Db4 D4 E4 Gb4 G4 Bb4 B4 _ Bb4 G4 Gb4 E4 D4 Db4 B3 B3 _ Db4 _ E4 Gb4 G4 Bb4 B4 _ G4 Gb4 E4 D4 Db4 B3"
+      },
+      {
+        "name": "F Whole Tone Void",
+        "len": 16,
+        "load": "F4 G4 A4 B4 Db5 Eb5 F5 _ Eb5 Db5 B4 A4 G4 F4 Eb4 Db4"
+      },
+      {
+        "name": "D Persian Echo",
+        "len": 32,
+        "load": "D4 _ Eb4 Gb4 G4 _ Ab4 Bb4 Db5 D5 _ Db5 Bb4 Ab4 G4 Gb4 Eb4 D4 _ Gb4 Ab4 _ Db5 D5 _ Bb4 Ab4 G4 Gb4 Eb4 D4 _"
+      },
+      {
+        "name": "C Hungarian Minor Ascent",
+        "len": 16,
+        "load": "C4 D4 Eb4 Gb4 G4 Ab4 B4 C5 B4 Ab4 G4 Gb4 Eb4 D4 C4 B3"
+      },
+      {
+        "name": "Bb Double Harmonic Dance",
+        "len": 16,
+        "load": "Bb3 B3 D4 Eb4 F4 Gb4 A4 Bb4 A4 Gb4 F4 Eb4 D4 B3 Bb3 _"
+      },
+      {
+        "name": "E Neapolitan Minor Tragedy",
+        "len": 32,
+        "load": "E3 F3 G3 A3 B3 C4 Eb4 E4 _ C4 B3 A3 G3 F3 E3 _ E3 _ F3 G3 A3 _ B3 C4 _ Eb4 E4 C4 _ B3 A3 G3"
+      }
     ]
   },
   {
-    id: 'oriental_scales', title: 'Escalas orientales',
-    seqs: [
-      { name: 'C Phrygian Dominant Gate',   len: 16, load: 'C4 Db4 E4 F4 G4 Ab4 Bb4 C5 Bb4 Ab4 G4 F4 E4 Db4 C4 _' },
-      { name: 'D Byzantine Spiral',         len: 32, load: 'D4 Eb4 _ Gb4 G4 A4 Bb4 _ Db5 D5 _ Db5 Bb4 A4 G4 Gb4 Eb4 D4 _ Gb4 G4 _ A4 Bb4 _ Db5 D5 A4 Bb4 Gb4 Eb4 D4' },
-      { name: 'E Hijaz Pulse',              len: 16, load: 'E3 F3 Ab3 A3 B3 C4 D4 E4 D4 C4 B3 A3 Ab3 F3 E3 _' },
-      { name: 'F Persian Void',             len: 16, load: 'F4 Gb4 A4 Bb4 B4 Db5 E5 F5 _ E5 Db5 B4 Bb4 A4 Gb4 F4' },
-      { name: 'G Hungarian Minor Gate',     len: 16, load: 'G3 A3 Bb3 Db4 D4 Eb4 Gb4 G4 _ Gb4 Eb4 D4 Db4 Bb3 A3 G3' },
-      { name: 'A Persian Desert',           len: 32, load: 'A3 _ Bb3 Db4 D4 _ Eb4 F4 Ab4 A4 _ Ab4 F4 Eb4 D4 Db4 Bb3 A3 _ Bb3 Db4 _ D4 Eb4 _ F4 Ab4 A4 _ F4 Eb4 _' },
-      { name: 'Bb Hijaz Rain',              len: 16, load: 'Bb3 B3 D4 Eb4 F4 Gb4 Ab4 Bb4 Ab4 Gb4 F4 Eb4 D4 B3 Bb3 _' },
-      { name: 'C Double Harmonic Ancient',  len: 16, load: 'C4 Db4 E4 F4 G4 Ab4 B4 C5 B4 Ab4 G4 F4 E4 Db4 C4 _' },
-      { name: 'D Phrygian Dom Incantation', len: 32, load: 'D3 _ Eb3 Gb3 G3 A3 _ Bb3 C4 D4 _ Gb3 G3 A3 Bb3 _ D4 _ C4 Bb3 A3 G3 _ Gb3 Eb3 D3 _ Gb3 G3 A3 Bb3 D4' },
-      { name: 'E Byzantine Cathedral',      len: 32, load: 'E3 F3 Ab3 A3 B3 C4 Eb4 E4 _ C4 B3 A3 Ab3 F3 E3 _ E3 F3 _ Ab3 A3 B3 _ C4 Eb4 E4 _ Eb4 C4 B3 A3 _' },
-      { name: 'F Neapolitan Minor Veil',    len: 16, load: 'F4 Gb4 Ab4 Bb4 C5 Db5 E5 F5 E5 Db5 C5 Bb4 Ab4 Gb4 F4 _' },
-      { name: 'G Persian Rise',             len: 16, load: 'G3 Ab3 B3 C4 Db4 Eb4 Gb4 G4 _ Gb4 Eb4 Db4 C4 B3 Ab3 G3' },
-      { name: 'Ab Hijaz Shimmer',           len: 16, load: 'Ab3 A3 C4 Db4 Eb4 E4 Gb4 Ab4 Gb4 E4 Eb4 Db4 C4 A3 Ab3 _' },
-      { name: 'B Byzantine Throne',         len: 16, load: 'B3 C4 Eb4 E4 Gb4 G4 Bb4 B4 Bb4 G4 Gb4 E4 Eb4 C4 B3 _' },
-      { name: 'C Hungarian Minor Circle',   len: 32, load: 'C4 D4 Eb4 _ Gb4 G4 Ab4 B4 C5 B4 _ Ab4 G4 Gb4 _ Eb4 D4 C4 _ Eb4 Gb4 _ G4 Ab4 B4 C5 _ B4 Ab4 G4 Gb4 _' },
-      { name: 'D Neapolitan Minor Oasis',   len: 32, load: 'D4 Eb4 F4 G4 A4 Bb4 Db5 D5 _ Db5 Bb4 A4 G4 F4 Eb4 D4 D3 Eb3 F3 G3 _ A3 Bb3 _ Db4 D4 _ Bb3 A3 G3 F3 D3' },
-      { name: 'E Persian Twilight',         len: 16, load: 'E4 F4 Ab4 A4 Bb4 C5 Eb5 E5 _ Eb5 C5 Bb4 A4 Ab4 F4 E4' },
-      { name: 'Gb Byzantine Song',          len: 16, load: 'Gb3 G3 Bb3 B3 Db4 D4 F4 Gb4 F4 D4 Db4 B3 Bb3 G3 Gb3 _' },
-      { name: 'A Hijaz Long',               len: 32, load: 'A3 _ Bb3 Db4 D4 _ E4 F4 G4 A4 _ G4 F4 E4 D4 Db4 Bb3 A3 _ Db4 D4 _ E4 F4 G4 A4 _ G4 F4 E4 D4 _' },
-      { name: 'C Persian Spiral Long',      len: 32, load: 'C3 _ Db3 E3 F3 _ Gb3 Ab3 B3 C4 _ B3 Ab3 Gb3 F3 E3 Db3 C3 _ E3 Gb3 _ Ab3 B3 C4 _ B3 Ab3 Gb3 E3 Db3 C3' }
+    "id": "oriental_scales",
+    "title": "Escalas orientales",
+    "seqs": [
+      {
+        "name": "C Phrygian Dominant Gate",
+        "len": 16,
+        "load": "C4 Db4 E4 F4 G4 Ab4 Bb4 C5 Bb4 Ab4 G4 F4 E4 Db4 C4 _"
+      },
+      {
+        "name": "D Byzantine Spiral",
+        "len": 32,
+        "load": "D4 Eb4 _ Gb4 G4 A4 Bb4 _ Db5 D5 _ Db5 Bb4 A4 G4 Gb4 Eb4 D4 _ Gb4 G4 _ A4 Bb4 _ Db5 D5 A4 Bb4 Gb4 Eb4 D4"
+      },
+      {
+        "name": "E Hijaz Pulse",
+        "len": 16,
+        "load": "E3 F3 Ab3 A3 B3 C4 D4 E4 D4 C4 B3 A3 Ab3 F3 E3 _"
+      },
+      {
+        "name": "F Persian Void",
+        "len": 16,
+        "load": "F4 Gb4 A4 Bb4 B4 Db5 E5 F5 _ E5 Db5 B4 Bb4 A4 Gb4 F4"
+      },
+      {
+        "name": "G Hungarian Minor Gate",
+        "len": 16,
+        "load": "G3 A3 Bb3 Db4 D4 Eb4 Gb4 G4 _ Gb4 Eb4 D4 Db4 Bb3 A3 G3"
+      },
+      {
+        "name": "A Persian Desert",
+        "len": 32,
+        "load": "A3 _ Bb3 Db4 D4 _ Eb4 F4 Ab4 A4 _ Ab4 F4 Eb4 D4 Db4 Bb3 A3 _ Bb3 Db4 _ D4 Eb4 _ F4 Ab4 A4 _ F4 Eb4 _"
+      },
+      {
+        "name": "Bb Hijaz Rain",
+        "len": 16,
+        "load": "Bb3 B3 D4 Eb4 F4 Gb4 Ab4 Bb4 Ab4 Gb4 F4 Eb4 D4 B3 Bb3 _"
+      },
+      {
+        "name": "C Double Harmonic Ancient",
+        "len": 16,
+        "load": "C4 Db4 E4 F4 G4 Ab4 B4 C5 B4 Ab4 G4 F4 E4 Db4 C4 _"
+      },
+      {
+        "name": "D Phrygian Dom Incantation",
+        "len": 32,
+        "load": "D3 _ Eb3 Gb3 G3 A3 _ Bb3 C4 D4 _ Gb3 G3 A3 Bb3 _ D4 _ C4 Bb3 A3 G3 _ Gb3 Eb3 D3 _ Gb3 G3 A3 Bb3 D4"
+      },
+      {
+        "name": "E Byzantine Cathedral",
+        "len": 32,
+        "load": "E3 F3 Ab3 A3 B3 C4 Eb4 E4 _ C4 B3 A3 Ab3 F3 E3 _ E3 F3 _ Ab3 A3 B3 _ C4 Eb4 E4 _ Eb4 C4 B3 A3 _"
+      },
+      {
+        "name": "F Neapolitan Minor Veil",
+        "len": 16,
+        "load": "F4 Gb4 Ab4 Bb4 C5 Db5 E5 F5 E5 Db5 C5 Bb4 Ab4 Gb4 F4 _"
+      },
+      {
+        "name": "G Persian Rise",
+        "len": 16,
+        "load": "G3 Ab3 B3 C4 Db4 Eb4 Gb4 G4 _ Gb4 Eb4 Db4 C4 B3 Ab3 G3"
+      },
+      {
+        "name": "Ab Hijaz Shimmer",
+        "len": 16,
+        "load": "Ab3 A3 C4 Db4 Eb4 E4 Gb4 Ab4 Gb4 E4 Eb4 Db4 C4 A3 Ab3 _"
+      },
+      {
+        "name": "B Byzantine Throne",
+        "len": 16,
+        "load": "B3 C4 Eb4 E4 Gb4 G4 Bb4 B4 Bb4 G4 Gb4 E4 Eb4 C4 B3 _"
+      },
+      {
+        "name": "C Hungarian Minor Circle",
+        "len": 32,
+        "load": "C4 D4 Eb4 _ Gb4 G4 Ab4 B4 C5 B4 _ Ab4 G4 Gb4 _ Eb4 D4 C4 _ Eb4 Gb4 _ G4 Ab4 B4 C5 _ B4 Ab4 G4 Gb4 _"
+      },
+      {
+        "name": "D Neapolitan Minor Oasis",
+        "len": 32,
+        "load": "D4 Eb4 F4 G4 A4 Bb4 Db5 D5 _ Db5 Bb4 A4 G4 F4 Eb4 D4 D3 Eb3 F3 G3 _ A3 Bb3 _ Db4 D4 _ Bb3 A3 G3 F3 D3"
+      },
+      {
+        "name": "E Persian Twilight",
+        "len": 16,
+        "load": "E4 F4 Ab4 A4 Bb4 C5 Eb5 E5 _ Eb5 C5 Bb4 A4 Ab4 F4 E4"
+      },
+      {
+        "name": "Gb Byzantine Song",
+        "len": 16,
+        "load": "Gb3 G3 Bb3 B3 Db4 D4 F4 Gb4 F4 D4 Db4 B3 Bb3 G3 Gb3 _"
+      },
+      {
+        "name": "A Hijaz Long",
+        "len": 32,
+        "load": "A3 _ Bb3 Db4 D4 _ E4 F4 G4 A4 _ G4 F4 E4 D4 Db4 Bb3 A3 _ Db4 D4 _ E4 F4 G4 A4 _ G4 F4 E4 D4 _"
+      },
+      {
+        "name": "C Persian Spiral Long",
+        "len": 32,
+        "load": "C3 _ Db3 E3 F3 _ Gb3 Ab3 B3 C4 _ B3 Ab3 Gb3 F3 E3 Db3 C3 _ E3 Gb3 _ Ab3 B3 C4 _ B3 Ab3 Gb3 E3 Db3 C3"
+      }
     ]
   },
   {
-    id: 'mel_scales', title: 'Escalas melancólicas',
-    seqs: [
-      { name: 'A Natural Minor Rain',     len: 16, load: 'A3 B3 C4 D4 E4 F4 G4 A4 G4 F4 E4 D4 C4 B3 A3 _' },
-      { name: 'D Dorian Longing',         len: 32, load: 'D4 _ E4 F4 G4 _ B4 _ A4 G4 F4 _ E4 D4 _ F4 D4 E4 F4 G4 _ A4 B4 A4 G4 _ F4 E4 D4 _ C4 D4' },
-      { name: 'E Harmonic Minor Flame',   len: 16, load: 'E3 Gb3 G3 A3 B3 C4 Eb4 E4 Eb4 C4 B3 A3 G3 Gb3 E3 _' },
-      { name: 'G Natural Minor Dusk',     len: 32, load: 'G3 _ A3 Bb3 _ C4 D4 _ Eb4 F4 G4 F4 _ Eb4 D4 C4 Bb3 A3 _ G3 _ A3 Bb3 C4 _ D4 Eb4 _ F4 G4 Eb4 _' },
-      { name: 'C Hungarian Minor Grief',  len: 16, load: 'C4 D4 Eb4 Gb4 G4 Ab4 B4 C5 _ B4 Ab4 G4 Gb4 Eb4 D4 C4' },
-      { name: 'F Melodic Minor Sighs',    len: 16, load: 'F3 G3 Ab3 Bb3 C4 D4 E4 F4 Eb4 Db4 C4 Bb3 Ab3 G3 F3 _' },
-      { name: 'B Natural Minor Sorrow',   len: 16, load: 'B3 Db4 D4 E4 Gb4 G4 A4 B4 A4 G4 Gb4 E4 D4 Db4 B3 _' },
-      { name: 'A Dorian Ache',            len: 32, load: 'A3 C4 _ E4 Gb4 _ G4 E4 D4 C4 _ B3 A3 _ Gb3 G3 A3 B3 C4 E4 _ D4 E4 Gb4 G4 _ A4 G4 E4 Gb4 _ D4' },
-      { name: 'Gb Minor Pentatonic Tear', len: 16, load: 'Gb3 A3 B3 Db4 E4 Gb4 E4 Db4 B3 A3 Gb3 A3 B3 E4 Db4 Gb3' },
-      { name: 'C Minor Pentatonic Fade',  len: 16, load: 'C4 Eb4 F4 G4 Bb4 C5 Bb4 G4 F4 Eb4 C4 Eb4 G4 Bb4 G4 C4' },
-      { name: 'D Natural Minor Mist',     len: 32, load: 'D4 _ F4 _ A4 _ C5 _ D5 _ C5 Bb4 A4 G4 F4 _ D4 F4 A4 C5 _ A4 G4 F4 E4 D4 _ Bb3 C4 D4 _ F4' },
-      { name: 'E Dorian Lost',            len: 32, load: 'E4 Gb4 G4 _ A4 B4 _ Db5 D5 _ B4 A4 G4 Gb4 E4 _ E3 G3 A3 Gb3 _ E3 D4 Db4 _ B3 A3 G3 _ Gb3 E3 _' },
-      { name: 'G Harmonic Minor Elegy',   len: 32, load: 'G3 A3 Bb3 C4 D4 Eb4 Gb4 G4 _ Gb4 Eb4 D4 C4 Bb3 A3 G3 G3 _ Bb3 _ C4 Eb4 _ Gb4 G4 Eb4 C4 _ Bb3 A3 G3 _' },
-      { name: 'A Melodic Minor Night',    len: 32, load: 'A3 _ B3 C4 D4 _ E4 Gb4 Ab4 A4 _ Ab4 Gb4 E4 D4 C4 B3 A3 _ D4 E4 _ Gb4 Ab4 A4 _ Gb4 E4 D4 B3 _ A3' },
-      { name: 'Bb Natural Minor Haze',    len: 16, load: 'Bb3 C4 Db4 Eb4 F4 Gb4 Ab4 Bb4 Ab4 Gb4 F4 Eb4 Db4 C4 Bb3 _' },
-      { name: 'Gb Natural Minor Trace',   len: 16, load: 'Gb3 Ab3 A3 B3 Db4 D4 E4 Gb4 E4 D4 Db4 B3 A3 Ab3 Gb3 _' },
-      { name: 'C Dorian Reflection',      len: 32, load: 'C4 _ D4 Eb4 F4 _ G4 A4 Bb4 C5 _ Bb4 A4 G4 F4 Eb4 D4 C4 _ Eb4 G4 _ A4 Bb4 C5 _ Bb4 G4 F4 Eb4 D4 _' },
-      { name: 'D Minor Pentatonic Echo',  len: 16, load: 'D4 F4 G4 A4 C5 D5 C5 A4 G4 F4 D4 F4 A4 C5 A4 D4' },
-      { name: 'E Hungarian Minor Dream',  len: 32, load: 'E3 Gb3 G3 Bb3 B3 C4 Eb4 E4 _ Eb4 C4 B3 Bb3 G3 Gb3 E3 E3 _ Gb3 Bb3 B3 _ C4 Eb4 E4 _ C4 B3 Bb3 G3 Gb3 E3' },
-      { name: 'G Melodic Minor Dusk',     len: 16, load: 'G3 A3 Bb3 C4 D4 E4 Gb4 G4 F4 Eb4 D4 C4 Bb3 A3 G3 _' }
+    "id": "mel_scales",
+    "title": "Escalas melancólicas",
+    "seqs": [
+      {
+        "name": "A Natural Minor Rain",
+        "len": 16,
+        "load": "A3 B3 C4 D4 E4 F4 G4 A4 G4 F4 E4 D4 C4 B3 A3 _"
+      },
+      {
+        "name": "D Dorian Longing",
+        "len": 32,
+        "load": "D4 _ E4 F4 G4 _ B4 _ A4 G4 F4 _ E4 D4 _ F4 D4 E4 F4 G4 _ A4 B4 A4 G4 _ F4 E4 D4 _ C4 D4"
+      },
+      {
+        "name": "E Harmonic Minor Flame",
+        "len": 16,
+        "load": "E3 Gb3 G3 A3 B3 C4 Eb4 E4 Eb4 C4 B3 A3 G3 Gb3 E3 _"
+      },
+      {
+        "name": "G Natural Minor Dusk",
+        "len": 32,
+        "load": "G3 _ A3 Bb3 _ C4 D4 _ Eb4 F4 G4 F4 _ Eb4 D4 C4 Bb3 A3 _ G3 _ A3 Bb3 C4 _ D4 Eb4 _ F4 G4 Eb4 _"
+      },
+      {
+        "name": "C Hungarian Minor Grief",
+        "len": 16,
+        "load": "C4 D4 Eb4 Gb4 G4 Ab4 B4 C5 _ B4 Ab4 G4 Gb4 Eb4 D4 C4"
+      },
+      {
+        "name": "F Melodic Minor Sighs",
+        "len": 16,
+        "load": "F3 G3 Ab3 Bb3 C4 D4 E4 F4 Eb4 Db4 C4 Bb3 Ab3 G3 F3 _"
+      },
+      {
+        "name": "B Natural Minor Sorrow",
+        "len": 16,
+        "load": "B3 Db4 D4 E4 Gb4 G4 A4 B4 A4 G4 Gb4 E4 D4 Db4 B3 _"
+      },
+      {
+        "name": "A Dorian Ache",
+        "len": 32,
+        "load": "A3 C4 _ E4 Gb4 _ G4 E4 D4 C4 _ B3 A3 _ Gb3 G3 A3 B3 C4 E4 _ D4 E4 Gb4 G4 _ A4 G4 E4 Gb4 _ D4"
+      },
+      {
+        "name": "Gb Minor Pentatonic Tear",
+        "len": 16,
+        "load": "Gb3 A3 B3 Db4 E4 Gb4 E4 Db4 B3 A3 Gb3 A3 B3 E4 Db4 Gb3"
+      },
+      {
+        "name": "C Minor Pentatonic Fade",
+        "len": 16,
+        "load": "C4 Eb4 F4 G4 Bb4 C5 Bb4 G4 F4 Eb4 C4 Eb4 G4 Bb4 G4 C4"
+      },
+      {
+        "name": "D Natural Minor Mist",
+        "len": 32,
+        "load": "D4 _ F4 _ A4 _ C5 _ D5 _ C5 Bb4 A4 G4 F4 _ D4 F4 A4 C5 _ A4 G4 F4 E4 D4 _ Bb3 C4 D4 _ F4"
+      },
+      {
+        "name": "E Dorian Lost",
+        "len": 32,
+        "load": "E4 Gb4 G4 _ A4 B4 _ Db5 D5 _ B4 A4 G4 Gb4 E4 _ E3 G3 A3 Gb3 _ E3 D4 Db4 _ B3 A3 G3 _ Gb3 E3 _"
+      },
+      {
+        "name": "G Harmonic Minor Elegy",
+        "len": 32,
+        "load": "G3 A3 Bb3 C4 D4 Eb4 Gb4 G4 _ Gb4 Eb4 D4 C4 Bb3 A3 G3 G3 _ Bb3 _ C4 Eb4 _ Gb4 G4 Eb4 C4 _ Bb3 A3 G3 _"
+      },
+      {
+        "name": "A Melodic Minor Night",
+        "len": 32,
+        "load": "A3 _ B3 C4 D4 _ E4 Gb4 Ab4 A4 _ Ab4 Gb4 E4 D4 C4 B3 A3 _ D4 E4 _ Gb4 Ab4 A4 _ Gb4 E4 D4 B3 _ A3"
+      },
+      {
+        "name": "Bb Natural Minor Haze",
+        "len": 16,
+        "load": "Bb3 C4 Db4 Eb4 F4 Gb4 Ab4 Bb4 Ab4 Gb4 F4 Eb4 Db4 C4 Bb3 _"
+      },
+      {
+        "name": "Gb Natural Minor Trace",
+        "len": 16,
+        "load": "Gb3 Ab3 A3 B3 Db4 D4 E4 Gb4 E4 D4 Db4 B3 A3 Ab3 Gb3 _"
+      },
+      {
+        "name": "C Dorian Reflection",
+        "len": 32,
+        "load": "C4 _ D4 Eb4 F4 _ G4 A4 Bb4 C5 _ Bb4 A4 G4 F4 Eb4 D4 C4 _ Eb4 G4 _ A4 Bb4 C5 _ Bb4 G4 F4 Eb4 D4 _"
+      },
+      {
+        "name": "D Minor Pentatonic Echo",
+        "len": 16,
+        "load": "D4 F4 G4 A4 C5 D5 C5 A4 G4 F4 D4 F4 A4 C5 A4 D4"
+      },
+      {
+        "name": "E Hungarian Minor Dream",
+        "len": 32,
+        "load": "E3 Gb3 G3 Bb3 B3 C4 Eb4 E4 _ Eb4 C4 B3 Bb3 G3 Gb3 E3 E3 _ Gb3 Bb3 B3 _ C4 Eb4 E4 _ C4 B3 Bb3 G3 Gb3 E3"
+      },
+      {
+        "name": "G Melodic Minor Dusk",
+        "len": 16,
+        "load": "G3 A3 Bb3 C4 D4 E4 Gb4 G4 F4 Eb4 D4 C4 Bb3 A3 G3 _"
+      }
     ]
   },
   {
-    id: 'ambient_arps', title: 'Arpegios Ambient',
-    seqs: [
-      { name: 'C Major Open',         len: 16, load: 'C4 _ _ G4 _ _ E5 _ _ C5 _ G4 _ _ E4 _' },
-      { name: 'A Minor Float',        len: 32, load: 'A3 _ _ _ E4 _ _ _ C5 _ _ _ A4 E4 _ _ A3 _ _ _ G4 _ _ _ E4 C4 _ _ A3 _ _ _' },
-      { name: 'D Major Drift',        len: 16, load: 'D4 _ _ A4 _ _ Gb5 _ D5 _ _ A4 _ _ D4 _' },
-      { name: 'Gb Minor Breath',      len: 32, load: 'Gb3 _ _ _ Db4 _ _ _ A4 _ _ _ Gb4 _ Db4 _ Gb3 _ _ _ E4 _ _ _ A3 Db4 _ _ Gb3 _ _ _' },
-      { name: 'Bb Major Suspension',  len: 16, load: 'Bb3 _ _ F4 _ _ D5 _ Bb4 _ _ F4 _ _ Bb3 _' },
-      { name: 'E Minor Contemplation',len: 32, load: 'E3 _ _ _ B3 _ _ _ G4 _ _ _ E4 _ B3 _ E3 _ _ _ D4 _ _ _ B3 G3 _ _ E3 _ _ _' },
-      { name: 'Ab Major Expanse',     len: 16, load: 'Ab3 _ _ Eb4 _ _ C5 _ Ab4 _ _ Eb4 _ _ Ab3 _' },
-      { name: 'C Minor Twilight',     len: 32, load: 'C4 _ _ G4 _ _ Eb5 _ _ C5 _ G4 _ Eb4 _ _ C4 _ _ Bb3 _ _ G3 _ Eb4 G4 _ _ Bb4 C5 _ _' },
-      { name: 'G Major Horizon',      len: 16, load: 'G3 _ _ D4 _ _ B4 _ G4 _ _ D4 _ _ G3 _' },
-      { name: 'D Dorian Space',       len: 32, load: 'D4 _ _ _ A4 _ _ _ F4 _ _ _ D5 _ _ _ D4 _ _ _ C5 _ _ _ A4 F4 _ _ D4 _ _ _' },
-      { name: 'E Major Shimmer',      len: 16, load: 'E4 _ _ B4 _ _ Ab5 _ E5 _ _ B4 _ _ E4 _' },
-      { name: 'A Major Calm',         len: 32, load: 'A3 _ _ _ E4 _ _ _ Db5 _ _ _ A4 _ E4 _ A3 _ _ _ Db4 _ _ _ E4 A3 _ _ E3 _ _ _' },
-      { name: 'F Minor Depth',        len: 16, load: 'F3 _ _ C4 _ _ Ab4 _ F4 _ _ C4 _ _ F3 _' },
-      { name: 'G Minor Meditation',   len: 32, load: 'G3 _ _ _ D4 _ _ _ Bb4 _ _ _ G4 _ D4 _ G3 _ _ _ F4 _ _ _ D4 Bb3 _ _ G3 _ _ _' },
-      { name: 'B Major Void',         len: 16, load: 'B3 _ _ Gb4 _ _ Eb5 _ B4 _ _ Gb4 _ _ B3 _' },
-      { name: 'Db Minor Reverie',     len: 32, load: 'Db3 _ _ _ Ab3 _ _ _ E4 _ _ _ Db4 _ Ab3 _ Db3 _ _ _ B3 _ _ _ Ab3 E3 _ _ Db3 _ _ _' },
-      { name: 'Eb Major Glow',        len: 16, load: 'Eb4 _ _ Bb4 _ _ G5 _ Eb5 _ _ Bb4 _ _ Eb4 _' },
-      { name: 'A Mixolydian Open',    len: 32, load: 'A3 _ _ _ G4 _ _ _ E4 _ _ _ Db4 _ A4 _ A3 _ _ _ E4 _ _ _ Db4 G3 _ _ A3 _ _ _' },
-      { name: 'D Minor Atmospheric',  len: 16, load: 'D4 _ _ A4 _ _ F4 _ _ D4 _ A3 _ _ D4 _' },
-      { name: 'G Lydian Float',       len: 32, load: 'G3 _ _ _ D4 _ _ _ Db5 _ _ _ B4 _ G4 _ G3 _ _ _ E4 _ _ _ Db4 B3 _ _ G3 _ _ _' }
+    "id": "ambient_arps",
+    "title": "Arpegios Ambient",
+    "seqs": [
+      {
+        "name": "C Major Open Sky",
+        "len": 32,
+        "load": "C4~ C4~ C4~ C4 _ G4~ G4~ G4 _ E5~ E5~ E5~ E5 _ D5~ D5 _ C5~ C5~ C5~ C5 _ G4~ G4~ G4 _ E4~ E4 _ B4~ B4~ B4",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "A Minor Slow Orbit",
+        "len": 32,
+        "load": "A3~ A3~ A3~ A3 _ _ E4~ E4~ E4 _ C5~ C5~ C5~ C5 _ B4~ B4 _ A4~ A4~ A4~ A4 _ G4~ G4~ G4 _ E4~ E4 _ C4~ C4",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "D Major Horizon",
+        "len": 32,
+        "load": "D4~ D4~ D4 _ A4~ A4~ A4~ A4 _ _ Gb5~ Gb5~ Gb5 _ E5~ E5 _ D5~ D5~ D5~ D5 _ A4~ A4~ A4 _ Gb4~ Gb4 _ E4~ E4~ E4",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "Gb Minor Cold Breath",
+        "len": 32,
+        "load": "Gb3~ Gb3~ Gb3~ Gb3 _ _ Db4~ Db4~ Db4 _ A4~ A4~ A4~ A4 _ Ab4~ Ab4 _ Gb4~ Gb4~ Gb4~ Gb4 _ E4~ E4~ E4 _ Db4~ Db4 _ A3~ A3",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "Bb Major Suspension",
+        "len": 32,
+        "load": "Bb3~ Bb3~ Bb3~ Bb3 _ F4~ F4~ F4 _ D5~ D5~ D5~ D5 _ C5~ C5~ C5 _ Bb4~ Bb4~ Bb4~ Bb4 _ F4~ F4 _ Eb4~ Eb4~ Eb4 _ A4~ A4",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "E Minor Lanterns",
+        "len": 32,
+        "load": "E3~ E3~ E3~ E3 _ _ B3~ B3~ B3 _ G4~ G4~ G4~ G4 _ Gb4~ Gb4 _ E4~ E4~ E4~ E4 _ D4~ D4~ D4 _ B3~ B3 _ G3~ G3",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "Ab Major Wide Room",
+        "len": 32,
+        "load": "Ab3~ Ab3~ Ab3~ Ab3 _ Eb4~ Eb4~ Eb4 _ C5~ C5~ C5~ C5 _ Bb4~ Bb4 _ Ab4~ Ab4~ Ab4~ Ab4 _ Eb4~ Eb4~ Eb4 _ C4~ C4 _ G4~ G4~ G4",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "C Minor Twilight",
+        "len": 32,
+        "load": "C4~ C4~ C4~ C4 _ _ G4~ G4~ G4 _ Eb5~ Eb5~ Eb5~ Eb5 _ D5~ D5 _ C5~ C5~ C5~ C5 _ Bb4~ Bb4~ Bb4 _ G4~ G4 _ Eb4~ Eb4",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "G Major Distant Bell",
+        "len": 32,
+        "load": "G3~ G3~ G3 _ _ D4~ D4~ D4~ D4 _ B4~ B4~ B4 _ A4~ A4 _ G4~ G4~ G4~ G4 _ D4~ D4~ D4 _ B3~ B3 _ Gb4~ Gb4~ Gb4",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "D Dorian Blue Air",
+        "len": 32,
+        "load": "D4~ D4~ D4~ D4 _ _ A4~ A4~ A4 _ F4~ F4~ F4~ F4 _ E4~ E4 _ C5~ C5~ C5~ C5 _ A4~ A4~ A4 _ G4~ G4 _ D5~ D5",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "E Major Shimmer Field",
+        "len": 32,
+        "load": "E4~ E4~ E4~ E4 _ B4~ B4~ B4 _ Ab5~ Ab5~ Ab5~ Ab5 _ Gb5~ Gb5 _ E5~ E5~ E5~ E5 _ B4~ B4~ B4 _ Ab4~ Ab4 _ Db5~ Db5~ Db5",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "A Major Calm Current",
+        "len": 32,
+        "load": "A3~ A3~ A3~ A3 _ _ E4~ E4~ E4 _ Db5~ Db5~ Db5~ Db5 _ B4~ B4 _ A4~ A4~ A4~ A4 _ E4~ E4~ E4 _ Db4~ Db4 _ Ab4~ Ab4",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "F Minor Deep Bloom",
+        "len": 64,
+        "load": "F3~ F3~ F3~ F3~ F3~ F3 _ _ C4~ C4~ C4~ C4 _ _ Ab4~ Ab4~ Ab4~ Ab4~ Ab4~ Ab4 _ _ G4~ G4~ G4 _ _ F4~ F4~ F4~ F4~ F4 _ _ Eb4~ Eb4~ Eb4~ Eb4 _ _ C4~ C4~ C4~ C4~ C4 _ _ Ab3~ Ab3~ Ab3 _ _ Db4~ Db4~ Db4~ Db4~ Db4 _ _ C4~ C4~ C4~ C4~ C4",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "G Minor Night Fog",
+        "len": 64,
+        "load": "G3~ G3~ G3~ G3~ G3~ G3 _ _ D4~ D4~ D4~ D4 _ _ Bb4~ Bb4~ Bb4~ Bb4~ Bb4~ Bb4 _ _ A4~ A4~ A4 _ _ G4~ G4~ G4~ G4~ G4 _ _ F4~ F4~ F4~ F4 _ _ D4~ D4~ D4~ D4~ D4 _ _ Bb3~ Bb3~ Bb3 _ _ Eb4~ Eb4~ Eb4~ Eb4~ Eb4 _ _ D4~ D4~ D4~ D4~ D4",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "B Major Empty Light",
+        "len": 64,
+        "load": "B3~ B3~ B3~ B3~ B3~ B3 _ _ Gb4~ Gb4~ Gb4~ Gb4 _ _ Eb5~ Eb5~ Eb5~ Eb5~ Eb5~ Eb5 _ _ Db5~ Db5~ Db5 _ _ B4~ B4~ B4~ B4~ B4 _ _ Gb4~ Gb4~ Gb4~ Gb4 _ _ Eb4~ Eb4~ Eb4~ Eb4~ Eb4 _ _ B3~ B3~ B3 _ _ E4~ E4~ E4~ E4~ E4 _ _ Gb4~ Gb4~ Gb4~ Gb4~ Gb4",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "Db Minor Reverie",
+        "len": 64,
+        "load": "Db3~ Db3~ Db3~ Db3~ Db3~ Db3 _ _ Ab3~ Ab3~ Ab3~ Ab3 _ _ E4~ E4~ E4~ E4~ E4~ E4 _ _ Eb4~ Eb4~ Eb4 _ _ Db4~ Db4~ Db4~ Db4~ Db4 _ _ B3~ B3~ B3~ B3 _ _ Ab3~ Ab3~ Ab3~ Ab3~ Ab3 _ _ E3~ E3~ E3 _ _ Gb3~ Gb3~ Gb3~ Gb3~ Gb3 _ _ Ab3~ Ab3~ Ab3~ Ab3~ Ab3",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "Eb Major Warm Glass",
+        "len": 64,
+        "load": "Eb4~ Eb4~ Eb4~ Eb4~ Eb4~ Eb4 _ _ Bb4~ Bb4~ Bb4~ Bb4 _ _ G5~ G5~ G5~ G5~ G5~ G5 _ _ F5~ F5~ F5 _ _ Eb5~ Eb5~ Eb5~ Eb5~ Eb5 _ _ Bb4~ Bb4~ Bb4~ Bb4 _ _ G4~ G4~ G4~ G4~ G4 _ _ Eb4~ Eb4~ Eb4 _ _ Ab4~ Ab4~ Ab4~ Ab4~ Ab4 _ _ Bb4~ Bb4~ Bb4~ Bb4~ Bb4",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "A Mixolydian Tide",
+        "len": 64,
+        "load": "A3~ A3~ A3~ A3~ A3~ A3 _ _ E4~ E4~ E4~ E4 _ _ G4~ G4~ G4~ G4~ G4~ G4 _ _ Gb4~ Gb4~ Gb4 _ _ E4~ E4~ E4~ E4~ E4 _ _ Db4~ Db4~ Db4~ Db4 _ _ A3~ A3~ A3~ A3~ A3 _ _ G3~ G3~ G3 _ _ B3~ B3~ B3~ B3~ B3 _ _ Db4~ Db4~ Db4~ Db4~ Db4",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "D Minor Ashes",
+        "len": 64,
+        "load": "D4~ D4~ D4~ D4~ D4~ D4 _ _ A4~ A4~ A4~ A4 _ _ F5~ F5~ F5~ F5~ F5~ F5 _ _ E5~ E5~ E5 _ _ D5~ D5~ D5~ D5~ D5 _ _ C5~ C5~ C5~ C5 _ _ A4~ A4~ A4~ A4~ A4 _ _ F4~ F4~ F4 _ _ Bb4~ Bb4~ Bb4~ Bb4~ Bb4 _ _ A4~ A4~ A4~ A4~ A4",
+        "gate": 92,
+        "velocity": 88
+      },
+      {
+        "name": "G Lydian Floating Roof",
+        "len": 64,
+        "load": "G3~ G3~ G3~ G3~ G3~ G3 _ _ D4~ D4~ D4~ D4 _ _ Db5~ Db5~ Db5~ Db5~ Db5~ Db5 _ _ B4~ B4~ B4 _ _ A4~ A4~ A4~ A4~ A4 _ _ G4~ G4~ G4~ G4 _ _ E4~ E4~ E4~ E4~ E4 _ _ D4~ D4~ D4 _ _ C4~ C4~ C4~ C4~ C4 _ _ Db4~ Db4~ Db4~ Db4~ Db4",
+        "gate": 92,
+        "velocity": 88
+      }
     ]
   },
   {
-    id: 'minimal_bass', title: 'Basslines Minimal',
-    seqs: [
-      { name: 'C Root Pulse',       len: 16, load: 'C2 _ C2 _ _ C2 _ C2 C2 _ _ C2 C2 _ C2 _' },
-      { name: 'A Minor Two Note',   len: 16, load: 'A2 _ _ C3 A2 _ A2 _ _ C3 _ A2 _ C3 A2 _' },
-      { name: 'G Syncopated Bass',  len: 16, load: '_ G2 _ _ G2 _ G2 _ _ G2 G2 _ _ G2 _ G2' },
-      { name: 'D Fifth Jump',       len: 16, load: 'D2 _ _ A2 _ D2 _ D2 A2 _ D2 _ _ A2 D2 _' },
-      { name: 'F Night Crawl',      len: 16, load: 'F2 _ _ _ F2 _ _ F2 _ _ Eb2 _ F2 _ _ _' },
-      { name: 'C Octave Bounce',    len: 16, load: 'C2 _ C3 _ C2 _ _ C3 _ C2 C3 _ C2 _ C3 _' },
-      { name: 'E Syncopated Two',   len: 16, load: '_ E2 _ G2 E2 _ _ G2 E2 _ E2 _ G2 _ E2 _' },
-      { name: 'Bb Offbeat Drive',   len: 16, load: '_ Bb1 _ _ Bb2 _ Bb1 _ _ Bb2 Db2 _ Bb1 _ Bb2 _' },
-      { name: 'G Minor Ghost',      len: 16, load: 'G2 _ _ _ G2 _ Bb2 _ _ G2 _ _ D3 _ _ G2' },
-      { name: 'A Hypnotic Loop',    len: 16, load: 'A2 A2 _ _ A2 _ A2 A2 _ A2 _ _ A2 A2 _ _' },
-      { name: 'C Minor Shift',      len: 32, load: 'C2 _ _ C2 _ Eb2 _ C2 _ _ C2 _ G2 _ C2 _ C2 _ _ C2 Eb2 _ _ G2 _ C2 _ _ Eb2 G2 C2 _' },
-      { name: 'D Third Pattern',    len: 16, load: 'D2 _ F2 _ D2 F2 _ D2 _ F2 D2 _ F2 _ D2 _' },
-      { name: 'E Accented Root',    len: 16, load: 'E2 _ E2 _ _ E2 E2 _ E2 _ _ E3 _ E2 _ _' },
-      { name: 'Gb Groove Cell',     len: 16, load: 'Gb2 _ _ Gb2 _ _ Gb2 A2 _ Gb2 _ A2 Gb2 _ _ Gb2' },
-      { name: 'Ab Deep Pulse',      len: 16, load: 'Ab1 _ _ _ Ab1 _ Ab2 _ _ _ Ab1 _ _ Eb2 _ _' },
-      { name: 'C Walking Minimal',  len: 32, load: 'C2 _ E2 _ G2 _ A2 _ G2 _ E2 _ C2 _ _ _ C2 _ D2 _ E2 _ G2 _ A2 G2 E2 D2 C2 _ _ _' },
-      { name: 'B Minor Pulse',      len: 16, load: 'B1 _ _ B2 _ D2 B1 _ B2 _ _ D2 _ B1 _ B2' },
-      { name: 'G Steady Low',       len: 16, load: 'G2 G2 _ G2 _ _ G2 G2 _ _ G2 _ G2 G2 _ G2' },
-      { name: 'Eb Displaced',       len: 16, load: '_ _ Eb2 _ _ Eb2 _ Eb3 _ _ Eb2 _ Eb3 _ _ Eb2' },
-      { name: 'A Minor Drift',      len: 32, load: 'A2 _ _ _ _ A2 _ _ C3 _ _ _ A2 _ _ _ A2 _ _ _ E2 _ _ _ A2 _ C3 _ _ _ A2 _' }
+    "id": "minimal_bass",
+    "title": "Basslines Minimal",
+    "seqs": [
+      {
+        "name": "C sparse pulse",
+        "len": 16,
+        "load": "C2! _ C2 _ _ G1 _ C2 _ _ Eb2 _ C2 _ G1 _",
+        "gate": 42
+      },
+      {
+        "name": "A minor pocket",
+        "len": 16,
+        "load": "A1! _ _ C2 A2 _ _ E2 _ C2 _ A1 _ E2 A2 _",
+        "gate": 44
+      },
+      {
+        "name": "G offbeat anchor",
+        "len": 16,
+        "load": "_ G1! _ D2 _ G2 _ _ Bb1 _ D2 _ G1 _ _ G2",
+        "gate": 38
+      },
+      {
+        "name": "D fifth return",
+        "len": 16,
+        "load": "D2! _ _ A1 _ D2 _ F2 A1 _ D2 _ _ C2 A1 _",
+        "gate": 46
+      },
+      {
+        "name": "F night crawl",
+        "len": 16,
+        "load": "F1! _ _ _ C2 _ Eb2 _ F2 _ _ C2 _ Ab1 _ F1",
+        "gate": 55
+      },
+      {
+        "name": "C octave skip",
+        "len": 16,
+        "load": "C2! _ C3 _ _ G2 C2 _ C3 _ _ G2 C2 _ Eb2 _",
+        "gate": 36
+      },
+      {
+        "name": "E minor hook",
+        "len": 16,
+        "load": "E2! _ _ G2 B1 _ E2 _ _ D2 B1 _ E2 G2 _ E2",
+        "gate": 43
+      },
+      {
+        "name": "Bb offbeat drive",
+        "len": 16,
+        "load": "_ Bb1! _ F2 Bb2 _ _ Db2 _ Ab1 Bb1 _ F2 _ Bb2 _",
+        "gate": 39
+      },
+      {
+        "name": "G minor ghost",
+        "len": 16,
+        "load": "G1! _ _ _ Bb1 _ D2 _ _ G2 _ F2 D2 _ _ G1",
+        "gate": 50
+      },
+      {
+        "name": "A hypnotic gap",
+        "len": 16,
+        "load": "A1! _ A1 _ _ E2 _ A2 _ _ C2 A1 E2 _ _ A1",
+        "gate": 41
+      },
+      {
+        "name": "C minor two-bar shift",
+        "len": 32,
+        "load": "C2! _ _ G1 C2 _ Eb2 _ _ G2 _ C2 _ Bb1 G1 _ C2 _ G2 _ Eb2 _ _ C3 Bb2 _ G2 _ C2 _ _ _",
+        "gate": 45
+      },
+      {
+        "name": "D minor third",
+        "len": 16,
+        "load": "D2! _ F2 _ D2 _ A1 _ _ F2 D2 _ C2 _ A1 D2",
+        "gate": 43
+      },
+      {
+        "name": "E root accent",
+        "len": 16,
+        "load": "E1! _ E2 _ _ B1 E2 _ G2 _ _ E1 B1 _ E2 _",
+        "gate": 37
+      },
+      {
+        "name": "Gb groove cell",
+        "len": 16,
+        "load": "Gb1! _ _ Db2 Gb2 _ A1 _ _ E2 Gb1 _ Db2 _ A1 Gb1",
+        "gate": 41
+      },
+      {
+        "name": "Ab deep pocket",
+        "len": 16,
+        "load": "Ab1! _ _ _ Eb2 _ Ab2 _ _ Gb2 Eb2 _ Ab1 _ C2 _",
+        "gate": 58
+      },
+      {
+        "name": "C walking minimal",
+        "len": 32,
+        "load": "C2! _ E2 _ G2 _ A2 _ G2 _ E2 _ D2 _ C2 _ C2 _ D2 _ Eb2 _ G2 _ A2 G2 _ E2 D2 _ C2 _",
+        "gate": 48
+      },
+      {
+        "name": "B minor pulse",
+        "len": 16,
+        "load": "B1! _ _ Gb2 B2 _ D2 _ _ A1 B1 _ Gb2 _ D2 B1",
+        "gate": 42
+      },
+      {
+        "name": "G low stagger",
+        "len": 16,
+        "load": "G1! G1 _ D2 _ G2 _ _ F2 _ D2 G1 _ Bb1 _ G2",
+        "gate": 35
+      },
+      {
+        "name": "Eb displaced",
+        "len": 16,
+        "load": "_ _ Eb2! _ Bb1 _ Eb3 _ _ Db2 _ Bb1 Eb2 _ _ G2",
+        "gate": 43
+      },
+      {
+        "name": "A minor drift",
+        "len": 32,
+        "load": "A1! _ _ _ E2 _ A2 _ C2 _ _ G2 A1 _ E2 _ _ A2 _ C3 E2 _ _ D2 C2 _ A1 _ E2 _ A2 _",
+        "gate": 54
+      }
     ]
   },
   {
-    id: 'experimental', title: 'Secuencias experimentales',
-    seqs: [
-      { name: 'Angular Jump A',      len: 16, load: 'A2 E5 _ Bb3 _ Gb4 C2 _ Ab4 _ D3 G5 _ F2 _ E4' },
-      { name: 'Asymmetric Cell Eb',  len: 16, load: 'Eb3 Eb3 _ Eb3 Bb3 _ _ Eb3 Eb3 Bb3 _ G3 _ Eb3 _ _' },
-      { name: 'Silence Break C',     len: 32, load: 'C4 _ _ _ _ _ _ C4 _ _ _ Eb4 _ _ _ _ _ G4 _ _ _ _ _ _ C5 _ _ _ G4 _ _ _' },
-      { name: 'Dense Cluster D',     len: 16, load: 'D4 Eb4 E4 F4 Gb4 G4 Ab4 A4 Bb4 B4 C5 Db5 D5 Eb5 E5 F5' },
-      { name: 'Polyrhythm G 3s',     len: 32, load: 'G3 _ _ G4 _ _ Bb3 _ _ G4 _ _ Eb3 _ _ G4 _ _ Bb3 _ _ G4 _ _ D4 _ _ G3 _ _ _ _' },
-      { name: 'Inverted Pattern F',  len: 16, load: 'F5 Eb5 Db5 C5 Bb4 Ab4 G4 F4 E4 Eb4 D4 C4 Bb3 Ab3 G3 F3' },
-      { name: 'Mutating Cell C',     len: 32, load: 'C4 Eb4 G4 _ C4 Eb4 G4 _ C4 Eb4 Ab4 _ C4 Eb4 Ab4 _ C4 E4 Ab4 _ C4 E4 A4 _ C4 E4 A4 _ C4 F4 A4 _' },
-      { name: 'Register Leap Bb',    len: 16, load: 'Bb4 _ Bb2 _ Bb5 _ Bb1 _ Bb3 _ Bb4 _ Bb2 _ Bb5 _' },
-      { name: 'Long Notes E',        len: 16, load: 'E4 _ _ _ _ _ _ _ E3 _ _ _ _ _ _ _' },
-      { name: 'Fragment Sequence A', len: 32, load: 'A3 B3 _ _ A3 B3 C4 _ A3 B3 C4 D4 _ B3 C4 D4 E4 _ C4 D4 E4 _ D4 E4 F4 _ E4 F4 _ _ F4 _' },
-      { name: 'Glitch Repeat D',     len: 32, load: 'D4 D4 D4 _ D4 D4 _ D4 D4 _ _ D4 Eb4 D4 _ D4 D4 E4 D4 _ D4 _ F4 D4 D4 _ Gb4 D4 _ D4 _ _' },
-      { name: 'Fibonacci C',         len: 16, load: 'C4 C4 _ C4 _ _ C4 _ _ _ _ C4 _ _ _ _' },
-      { name: 'Chromatic Steps Bb',  len: 16, load: 'Bb3 B3 C4 _ Db4 D4 Eb4 _ E4 F4 Gb4 _ G4 Ab4 A4 _' },
-      { name: 'Reverse Arp G',       len: 32, load: 'G5 Eb5 _ C5 G4 Eb4 _ C4 G3 _ Eb3 C3 _ G2 _ _ G5 F5 _ D5 G4 F4 _ D4 G3 _ F3 D3 _ G2 _ _' },
-      { name: 'Tritone Hold E',      len: 16, load: 'E4 _ _ Bb4 _ _ E4 Bb4 _ E4 _ Bb4 Eb4 _ Bb4 _' },
-      { name: 'Micro Repeat C',      len: 16, load: 'C4 Db4 C4 Db4 _ Db4 C4 _ C4 Eb4 Db4 C4 _ Db4 _ C4' },
-      { name: 'Odd Cell D 5-beat',   len: 32, load: 'D4 F4 A4 _ E4 D4 F4 A4 _ E4 D4 F4 A4 _ E4 D4 F4 A4 _ E4 D4 F4 A4 _ E4 D4 F4 A4 _ E4 _ _' },
-      { name: 'Descending Alarm Bb', len: 16, load: 'Bb5 _ Ab5 _ Gb5 _ F5 _ Eb5 _ Db5 _ C5 _ Bb4 _' },
-      { name: 'Static Burst G',      len: 32, load: 'G3 _ _ _ G3 _ _ _ G3 _ _ _ G3 _ _ _ G3 Bb3 D4 Gb4 Bb4 D5 Gb5 Bb4 D4 Bb3 G3 D3 Bb2 G2 D2 _' },
-      { name: 'Split Register A',    len: 32, load: 'A2 _ A5 _ A2 _ A5 _ A2 C3 A5 Db5 A2 E3 A5 Eb5 A2 _ A5 _ C3 _ Eb5 _ A2 A5 _ _ A3 _ A4 _' }
+    "id": "experimental",
+    "title": "Secuencias experimentales",
+    "seqs": [
+      {
+        "name": "Axis mirror A",
+        "len": 32,
+        "load": "A3! _ E4 _ Bb3 _ Gb4 _ C4 _ E4 _ D4 _ Db4 _ A4 _ D4 _ Ab4 _ C4 _ Gb4 _ Bb3 _ E4 _ A3 _",
+        "gate": 48
+      },
+      {
+        "name": "Additive cell Eb",
+        "len": 32,
+        "load": "Eb3 Eb3 _ G3 _ Eb3 Bb3 _ Eb4 _ G3 Eb3 _ _ Bb3 _ Eb3 G3 _ Eb4 _ Bb3 Eb3 _ G4 _ Eb4 Bb3 _ G3 _ Eb3",
+        "gate": 40
+      },
+      {
+        "name": "Negative space C",
+        "len": 32,
+        "load": "C4~ C4~ C4~ C4 _ _ _ _ Eb4~ Eb4 _ _ _ G4~ G4~ G4~ G4~ G4 _ _ _ _ C5~ C5~ C5 _ _ _ Bb4~ Bb4~ Bb4~ Bb4",
+        "gate": 92
+      },
+      {
+        "name": "Cluster bloom D",
+        "len": 32,
+        "load": "D4 Eb4 E4 _ _ A3 _ D4 F4 Gb4 G4 _ _ C4 _ D4 A4 Bb4 B4 _ _ F4 _ E4 Eb4 D4 Db4 _ A3 _ D4 _",
+        "gate": 34
+      },
+      {
+        "name": "Three-step orbit G",
+        "len": 32,
+        "load": "G3 _ _ D4 _ _ Bb3 _ _ F4 _ _ D4 _ _ A4 _ _ G4 _ _ Eb4 _ _ Bb3 _ _ F4 _ _ D4 _",
+        "gate": 46
+      },
+      {
+        "name": "Inversion field F",
+        "len": 32,
+        "load": "F3 _ C4 _ Ab4 _ Eb5 _ G4 _ D5 _ Bb4 _ F5 _ F5 _ Bb4 _ D5 _ G4 _ Eb5 _ Ab4 _ C4 _ F3 _",
+        "gate": 52
+      },
+      {
+        "name": "Mutating cell C",
+        "len": 32,
+        "load": "C4 Eb4 G4 _ C4 Eb4 G4 _ C4 E4 G4 _ C4 E4 Ab4 _ C4 F4 Ab4 _ C4 F4 A4 _ Db4 F4 A4 _ C4 E4 G4 _",
+        "gate": 38
+      },
+      {
+        "name": "Register dialogue Bb",
+        "len": 32,
+        "load": "Bb2! _ _ F5 _ Db3 _ Ab4 Bb2 _ _ Eb5 _ F3 _ Db5 Bb3 _ _ F4 _ Ab2 _ Db5 Bb2 _ Eb4 _ F2 _ Bb4 _",
+        "gate": 44
+      },
+      {
+        "name": "Long gate E",
+        "len": 32,
+        "load": "E4~ E4~ E4~ E4~ E4~ E4 _ _ Bb4~ Bb4~ Bb4 _ _ E5~ E5~ E5~ E5~ E5 _ _ _ D5~ D5~ D5~ D5 _ _ Bb4~ Bb4~ Bb4~ Bb4~ Bb4",
+        "gate": 94
+      },
+      {
+        "name": "Fragment growth A",
+        "len": 32,
+        "load": "A3 _ _ _ A3 B3 _ _ A3 B3 C4 _ A3 B3 C4 E4 _ B3 C4 E4 G4 _ C4 E4 A4 G4 _ E4 C4 B3 _ A3",
+        "gate": 42
+      },
+      {
+        "name": "Glitch mutation D",
+        "len": 32,
+        "load": "D4 D4 _ A4 D4 _ F4 _ D4 D4 _ Bb4 D4 _ Gb4 _ D4 Eb4 _ A4 D4 _ F4 C5 D4 D4 _ Gb4 Eb4 _ D4 _",
+        "gate": 30
+      },
+      {
+        "name": "Fibonacci signal C",
+        "len": 32,
+        "load": "C4 E4 G4 _ C5 _ _ E4 _ _ _ G4 _ _ _ _ C4 _ _ _ _ E4 _ _ _ _ _ G4 C5 _ E5 _",
+        "gate": 55
+      },
+      {
+        "name": "Chromatic windows Bb",
+        "len": 32,
+        "load": "Bb3 B3 C4 _ _ F4 Gb4 G4 _ _ Db4 D4 Eb4 _ _ Bb3 A3 Bb3 _ B3 C4 _ Gb4 G4 Ab4 _ D4 Eb4 _ Bb3 _ _",
+        "gate": 37
+      },
+      {
+        "name": "Reverse echo G",
+        "len": 32,
+        "load": "G3 Bb3 D4 _ F4 _ D4 Bb3 G4 _ F4 D4 _ Bb3 G3 _ G3 _ Bb3 D4 F4 G4 _ D4 Bb3 _ D4 F4 D4 Bb3 _ G3",
+        "gate": 47
+      },
+      {
+        "name": "Tritone gravity E",
+        "len": 32,
+        "load": "E4! _ Bb4 _ E5 _ D5 Bb4 _ Gb4 F4 _ E4 _ B3 _ Bb3 _ E4 _ Bb4 _ Ab4 E4 _ D4 Bb3 _ E3 _ B3 E4",
+        "gate": 53
+      },
+      {
+        "name": "Micro cell C",
+        "len": 32,
+        "load": "C4 Db4 C4 _ Eb4 Db4 C4 _ C4 Db4 F4 _ Eb4 Db4 C4 _ C5 B4 C5 _ Ab4 B4 C5 _ C4 Db4 Eb4 _ Db4 C4 _ _",
+        "gate": 32
+      },
+      {
+        "name": "Five-step loop D",
+        "len": 32,
+        "load": "D4 F4 A4 E4 C4 D4 F4 A4 E4 C4 D4 F4 A4 E4 C4 D4 F4 A4 E4 C4 D4 F4 A4 E4 C4 D4 F4 A4 E4 C4 D4 F4",
+        "gate": 36
+      },
+      {
+        "name": "Descending alarm Bb",
+        "len": 32,
+        "load": "Bb5 _ Ab5 _ Gb5 F5 _ Eb5 _ Db5 C5 _ Bb4 _ F5 _ Ab5 _ Gb5 F5 _ Eb5 Db5 _ C5 Bb4 _ Ab4 _ F4 Bb4 _",
+        "gate": 49
+      },
+      {
+        "name": "Static burst G",
+        "len": 32,
+        "load": "G3 _ _ G3 _ _ G3 _ _ G3 _ _ G3 _ _ _ G3 Bb3 D4 _ Gb4 Bb4 D5 _ Gb5 D5 Bb4 _ G4 D4 Bb3 G3",
+        "gate": 39
+      },
+      {
+        "name": "Split register A",
+        "len": 32,
+        "load": "A2! _ A5 _ E3 _ E5 _ C3 _ C5 _ G2 _ G4 _ A2 C3 _ A5 E3 G3 _ E5 C3 A3 _ C5 G2 _ A4 _",
+        "gate": 45
+      }
     ]
   },
   {
-    id: 'nocturnes', title: 'Nocturnes · Preludios',
-    seqs: [
-      { name: 'C minor Nocturne Line',    len: 16, load: 'C4 B3 Bb3 A3 Ab3 G3 Gb3 F3 E3 Eb3 D3 Db3 C3 _ _ _' },
-      { name: 'Bb minor Cantilena',       len: 16, load: 'Bb4 _ Ab4 Gb4 F4 Eb4 Db4 Bb3 _ C4 Db4 Eb4 F4 Db4 Bb3 _' },
-      { name: 'E minor Prelude Chromatic',len: 16, load: 'E4 _ Eb4 _ D4 _ Db4 _ C4 B3 _ Bb3 _ A3 _ Ab3' },
-      { name: 'A minor Dark Cascade',     len: 16, load: 'A4 Ab4 G4 Gb4 F4 E4 Eb4 D4 Db4 C4 B3 Bb3 A3 _ _ _' },
-      { name: 'G minor Lament',           len: 16, load: 'G3 _ Gb3 _ F3 _ E3 _ Eb3 D3 _ Db3 _ C3 _ G2' },
-      { name: 'F minor Nocturne Sigh',    len: 16, load: 'F4 Eb4 _ Db4 C4 Ab3 _ _ F4 Eb4 Db4 C4 Bb3 Ab3 _ F3' },
-      { name: 'Db minor Tragic Long',     len: 32, load: 'Db4 _ E4 _ Ab4 Gb4 _ E4 Db4 _ B3 _ Ab3 _ Gb3 E3 Db3 Ab2 _ B2 Db3 E3 Gb3 Ab3 Gb3 E3 Db3 _ B2 _ Ab2 _' },
-      { name: 'D minor Dramatic Rise',    len: 16, load: 'D3 F3 A3 D4 Eb4 F4 A4 Bb4 _ A4 F4 Eb4 D4 A3 F3 D3' },
-      { name: 'Eb minor Tragic Long',     len: 32, load: 'Eb4 _ Db4 C4 Bb3 A3 _ Ab3 Gb3 _ F3 Eb3 D3 _ Db3 _ Eb3 Gb3 Ab3 _ Bb3 A3 _ Ab3 Gb3 Eb3 _ Db3 C3 _ Bb2 _' },
-      { name: 'B minor Descent',          len: 16, load: 'B3 A3 G3 Gb3 E3 D3 Db3 B2 _ _ B2 Db3 D3 E3 Gb3 G3' },
-      { name: 'Ab minor Seventh Cloud',   len: 16, load: 'Ab3 _ C4 Eb4 Gb4 _ Ab4 Gb4 Eb4 C4 Ab3 _ Bb3 Db4 E4 _' },
-      { name: 'G minor Chromatic Walk',   len: 16, load: 'G4 _ F4 Eb4 _ D4 Db4 _ C4 B3 _ Bb3 A3 _ Ab3 G3' },
-      { name: 'C minor Ballad Long',      len: 32, load: 'C4 Eb4 G4 _ Bb4 Ab4 _ Gb4 F4 Eb4 _ D4 Eb4 _ C4 _ C4 Eb4 G4 Bb4 _ Ab4 Gb4 _ F4 Eb4 D4 Eb4 _ C4 _ _' },
-      { name: 'Gb minor Passionate',      len: 16, load: 'Gb4 _ A4 _ Db5 B4 _ A4 Gb4 _ E4 Db4 A3 _ Gb3 _' },
-      { name: 'Bb minor Dark Pulse',      len: 16, load: 'Bb3 Db4 F4 _ Gb4 F4 Db4 Bb3 Ab3 _ Gb3 F3 Eb3 _ Db3 _' },
-      { name: 'E minor Surge',            len: 16, load: 'E3 _ B3 _ E4 D4 _ B3 G3 _ D4 _ E4 G4 _ B4' },
-      { name: 'C minor Tragic Close',     len: 16, load: 'C4 B3 Bb3 A3 Ab3 G3 Gb3 F3 Eb3 D3 Db3 C3 _ G2 _ C2' },
-      { name: 'Db Major Borrowed Long',   len: 32, load: 'Db4 F4 Ab4 _ Bb4 Ab4 _ Gb4 Eb4 Db4 _ F4 Ab4 _ Bb4 Ab4 Gb4 F4 Eb4 Db4 _ Eb4 F4 Ab4 Bb4 _ Ab4 Gb4 Eb4 Db4 _ _' },
-      { name: 'A minor Etude',            len: 16, load: 'A3 C4 E4 A4 G4 E4 C4 A3 B3 D4 F4 B4 A4 F4 D4 B3' },
-      { name: 'F minor Sighing Long',     len: 32, load: 'F3 _ Ab3 C4 _ Eb4 Db4 C4 _ Bb3 Ab3 _ Gb3 F3 _ Eb3 F3 _ Ab3 C4 _ Db4 Eb4 _ Gb4 Ab4 _ Gb4 Eb4 Db4 _ C4' }
+    "id": "nocturnes",
+    "title": "Nocturnos · Preludios oscuros",
+    "seqs": [
+      {
+        "name": "C minor moonlit descent",
+        "len": 32,
+        "load": "C5~ C5~ C5 _ G4~ G4 _ Ab4~ Ab4 _ Eb4~ Eb4~ Eb4 _ D4~ D4 _ C4~ C4~ C4~ C4 _ Bb3~ Bb3 _ G3~ G3 _ C4~ C4~ C4~ C4",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "Bb minor cantilena",
+        "len": 32,
+        "load": "Bb4~ Bb4~ Bb4 _ Db5~ Db5 _ F5~ F5~ F5 _ Gb5~ Gb5 _ F5~ F5~ F5 _ Eb5~ Eb5 _ Db5~ Db5~ Db5 _ C5~ C5 _ Bb4~ Bb4~ Bb4~ Bb4",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "E minor prelude line",
+        "len": 32,
+        "load": "E4~ E4~ E4 _ B4~ B4 _ D5~ D5 _ C5~ C5~ C5 _ B4~ B4 _ G4~ G4~ G4 _ Gb4~ Gb4 _ E4~ E4~ E4 _ D4~ D4~ D4~ D4",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "A minor dark cascade",
+        "len": 32,
+        "load": "A4~ A4 _ E5~ E5 _ C5~ C5 _ B4~ B4 _ G4~ G4 _ E4~ E4~ E4 _ F4~ F4 _ D4~ D4 _ C4~ C4~ C4 _ A3~ A3~ A3",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "G minor lament",
+        "len": 32,
+        "load": "G4~ G4~ G4~ G4 _ D5~ D5 _ Bb4~ Bb4~ Bb4 _ A4~ A4 _ G4~ G4~ G4 _ F4~ F4 _ Eb4~ Eb4~ Eb4 _ D4~ D4 _ G3~ G3~ G3",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "F minor sigh",
+        "len": 32,
+        "load": "F4~ F4~ F4 _ Ab4~ Ab4 _ C5~ C5~ C5 _ Db5~ Db5 _ C5~ C5~ C5 _ Bb4~ Bb4 _ Ab4~ Ab4~ Ab4 _ G4~ G4 _ F4~ F4~ F4~ F4",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "Db minor night window",
+        "len": 64,
+        "load": "Db4~ Db4~ Db4~ Db4 _ Ab4~ Ab4~ Ab4 _ E5~ E5~ E5~ E5 _ Gb5~ Gb5 _ E5~ E5~ E5 _ Db5~ Db5~ Db5~ Db5 _ B4~ B4 _ Ab4~ Ab4~ Ab4 _ Gb4~ Gb4~ Gb4~ Gb4 _ E4~ E4 _ Db4~ Db4~ Db4~ Db4 _ B3~ B3~ B3 _ Ab3~ Ab3~ Ab3~ Ab3 _ E4~ E4 _ Db4~ Db4~ Db4~ Db4~ Db4~ Db4",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "D minor rising shadow",
+        "len": 32,
+        "load": "D4~ D4~ D4 _ F4~ F4 _ A4~ A4~ A4 _ C5~ C5 _ D5~ D5~ D5 _ Eb5~ Eb5 _ C5~ C5~ C5 _ A4~ A4 _ D4~ D4~ D4~ D4",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "Eb minor long night",
+        "len": 64,
+        "load": "Eb4~ Eb4~ Eb4~ Eb4 _ Bb4~ Bb4~ Bb4 _ Gb5~ Gb5~ Gb5~ Gb5 _ Ab5~ Ab5 _ Gb5~ Gb5~ Gb5 _ Eb5~ Eb5~ Eb5~ Eb5 _ Db5~ Db5 _ Bb4~ Bb4~ Bb4 _ Ab4~ Ab4~ Ab4~ Ab4 _ Gb4~ Gb4 _ Eb4~ Eb4~ Eb4~ Eb4 _ Db4~ Db4~ Db4 _ Bb3~ Bb3~ Bb3~ Bb3 _ Gb4~ Gb4 _ Eb4~ Eb4~ Eb4~ Eb4~ Eb4~ Eb4",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "B minor return",
+        "len": 32,
+        "load": "B4~ B4~ B4 _ Gb5~ Gb5 _ D5~ D5~ D5 _ Db5~ Db5 _ B4~ B4~ B4 _ A4~ A4 _ Gb4~ Gb4~ Gb4 _ E4~ E4 _ B4~ B4~ B4~ B4",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "Ab minor seventh mist",
+        "len": 32,
+        "load": "Ab4~ Ab4~ Ab4 _ Eb5~ Eb5 _ Gb5~ Gb5~ Gb5 _ C5~ C5 _ Bb4~ Bb4~ Bb4 _ Ab4~ Ab4 _ Gb4~ Gb4~ Gb4 _ Eb4~ Eb4 _ Ab4~ Ab4~ Ab4~ Ab4",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "G minor chromatic turn",
+        "len": 32,
+        "load": "G4~ G4~ G4 _ Gb4 _ F4~ F4 _ E4 _ Eb4~ Eb4~ Eb4 _ D4~ D4 _ Db4 _ C4~ C4~ C4 _ Bb3~ Bb3 _ A3 _ G3~ G3~ G3",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "C minor ballad",
+        "len": 64,
+        "load": "C4~ C4~ C4~ C4 _ Eb4~ Eb4~ Eb4 _ G4~ G4~ G4~ G4 _ Bb4~ Bb4 _ Ab4~ Ab4~ Ab4 _ G4~ G4~ G4~ G4 _ F4~ F4 _ Eb4~ Eb4~ Eb4 _ D4~ D4~ D4~ D4 _ Eb4~ Eb4 _ G4~ G4~ G4~ G4 _ Bb4~ Bb4~ Bb4 _ C5~ C5~ C5~ C5 _ G4~ G4 _ C4~ C4~ C4~ C4~ C4~ C4",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "Gb minor passion",
+        "len": 32,
+        "load": "Gb4~ Gb4~ Gb4 _ A4~ A4 _ Db5~ Db5~ Db5 _ E5~ E5 _ Db5~ Db5~ Db5 _ B4~ B4 _ A4~ A4~ A4 _ Ab4~ Ab4 _ Gb4~ Gb4~ Gb4~ Gb4",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "Bb minor dark pulse",
+        "len": 32,
+        "load": "Bb3~ Bb3 _ Db4~ Db4 _ F4~ F4~ F4 _ Gb4~ Gb4 _ F4~ F4 _ Db4~ Db4~ Db4 _ Bb3~ Bb3 _ Ab3~ Ab3 _ Gb3~ Gb3 _ F3~ F3~ F3",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "E minor surge",
+        "len": 32,
+        "load": "E3~ E3~ E3 _ B3~ B3 _ E4~ E4~ E4 _ D4~ D4 _ G4~ G4~ G4 _ B4~ B4 _ E5~ E5~ E5 _ D5~ D5 _ B4~ B4~ B4~ B4",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "C minor closing line",
+        "len": 32,
+        "load": "C5~ C5~ C5 _ Bb4~ Bb4 _ Ab4~ Ab4 _ G4~ G4~ G4 _ Gb4~ Gb4 _ F4~ F4~ F4 _ Eb4~ Eb4 _ D4~ D4~ D4 _ C4~ C4~ C4~ C4",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "Db major borrowed light",
+        "len": 64,
+        "load": "Db4~ Db4~ Db4~ Db4 _ F4~ F4~ F4 _ Ab4~ Ab4~ Ab4~ Ab4 _ Bb4~ Bb4 _ Ab4~ Ab4~ Ab4 _ Gb4~ Gb4~ Gb4~ Gb4 _ Eb4~ Eb4 _ F4~ F4~ F4 _ Ab4~ Ab4~ Ab4~ Ab4 _ Bb4~ Bb4 _ Db5~ Db5~ Db5~ Db5 _ C5~ C5~ C5 _ Ab4~ Ab4~ Ab4~ Ab4 _ Gb4~ Gb4 _ Db4~ Db4~ Db4~ Db4~ Db4~ Db4",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "A minor study",
+        "len": 32,
+        "load": "A3~ A3 _ C4~ C4 _ E4~ E4 _ A4~ A4 _ G4~ G4 _ E4~ E4 _ C4~ C4 _ B3~ B3 _ D4~ D4 _ F4~ F4 _ E4~ E4",
+        "gate": 90,
+        "velocity": 92
+      },
+      {
+        "name": "F minor sighing long",
+        "len": 64,
+        "load": "F3~ F3~ F3~ F3 _ Ab3~ Ab3~ Ab3 _ C4~ C4~ C4~ C4 _ Eb4~ Eb4 _ Db4~ Db4~ Db4 _ C4~ C4~ C4~ C4 _ Bb3~ Bb3 _ Ab3~ Ab3~ Ab3 _ Gb3~ Gb3~ Gb3~ Gb3 _ F3~ F3 _ Ab3~ Ab3~ Ab3~ Ab3 _ C4~ C4~ C4 _ Db4~ Db4~ Db4~ Db4 _ C4~ C4 _ F3~ F3~ F3~ F3~ F3~ F3",
+        "gate": 90,
+        "velocity": 92
+      }
     ]
   },
   {
-    id: 'idm2', title: 'IDM 2 · Piano Melancólico',
-    seqs: [
-      { name: 'F minor Wistful Bells',    len: 16, load: 'F3 _ _ C4 Ab3 _ F4 _ Eb4 _ C4 Ab3 F3 _ _ _' },
-      { name: 'A minor Music Box',        len: 16, load: 'A3 C4 E4 _ A4 _ E4 C4 A3 _ B3 E4 _ G4 E4 B3' },
-      { name: 'Bb minor Drukqs Piano',    len: 16, load: 'Bb3 _ Db4 F4 _ Gb4 F4 Db4 _ Bb3 _ Ab3 Gb3 F3 _ Eb3' },
-      { name: 'C minor Toy Box',          len: 16, load: 'C4 Eb4 _ G4 _ Bb4 _ G4 Eb4 _ C4 _ Bb3 _ G3 Eb3' },
-      { name: 'Gb Childlike',             len: 16, load: 'Gb4 Ab4 Bb4 _ Db5 _ Bb4 Ab4 Gb4 _ Eb4 _ Db4 Bb3 _ Gb3' },
-      { name: 'D minor Clockwork Long',   len: 32, load: 'D4 _ F4 _ A4 _ F4 D4 _ E4 _ G4 A4 _ G4 E4 D4 _ F4 A4 _ C5 A4 F4 D4 _ E4 G4 _ A4 _ G4' },
-      { name: 'E Wistful Major',          len: 16, load: 'E4 _ Gb4 Ab4 _ B4 _ Ab4 Gb4 E4 _ Db4 B3 _ Ab3 E3' },
-      { name: 'A minor Echo Pulse',       len: 16, load: 'A4 _ _ A4 E4 _ A4 _ _ E4 C4 _ _ E4 A3 _' },
-      { name: 'F minor Reverie Long',     len: 32, load: 'F3 C4 _ Ab4 _ F4 _ Eb4 Db4 _ C4 _ Bb3 Ab3 _ Gb3 F3 _ C4 Ab3 _ F4 Eb4 _ Db4 C4 _ Ab3 _ Gb3 F3 _' },
-      { name: 'C Melancholy Toy',         len: 16, load: 'C5 _ B4 _ A4 _ G4 _ E4 _ D4 _ C4 _ E4 G4' },
-      { name: 'Db Slow Cells',            len: 16, load: 'Db4 _ _ _ Ab4 _ _ _ F4 _ _ _ Eb4 _ _ _' },
-      { name: 'G minor Clock-like',       len: 16, load: 'G4 F4 Eb4 D4 _ C4 Bb3 _ D4 _ C4 Bb3 G3 _ F3 _' },
-      { name: 'B Bright Sad',            len: 16, load: 'B3 _ Db4 E4 _ Gb4 _ Ab4 _ Gb4 E4 Db4 _ B3 _ Ab3' },
-      { name: 'A minor Digital Pulse',    len: 16, load: 'A3 _ A4 _ _ A3 A4 _ A3 _ _ A4 _ A3 A4 _' },
-      { name: 'Eb minor Autumn',          len: 16, load: 'Eb4 _ Gb4 _ Bb4 _ Ab4 Gb4 Eb4 _ Db4 _ Bb3 _ Ab3 Eb3' },
-      { name: 'Gb minor Drukqs Fog',      len: 16, load: 'Gb3 _ _ B3 _ _ E4 _ _ Db4 _ _ A3 _ _ Gb3' },
-      { name: 'C minor Haunted Keys',     len: 16, load: 'C4 Eb4 G4 Bb4 _ Ab4 G4 Eb4 C4 _ Bb3 Ab3 G3 Eb3 C3 _' },
-      { name: 'A Pastoral Sad',           len: 16, load: 'A4 B4 _ Db5 E5 _ Db5 B4 A4 _ Gb4 E4 _ Db4 A3 _' },
-      { name: 'E minor Mechanical',       len: 16, load: 'E4 G4 B4 E5 _ B4 G4 E4 _ D4 B3 G3 _ A3 Gb3 E3' },
-      { name: 'D Dorian Drukqs Long',     len: 32, load: 'D4 _ F4 _ A4 _ C5 _ A4 F4 _ D4 _ E4 G4 _ A4 _ C5 _ A4 G4 F4 _ D4 E4 _ G4 A4 _ C5 _' }
+    "id": "idm2",
+    "title": "IDM · Piano melancólico",
+    "seqs": [
+      {
+        "name": "F minor wistful bells",
+        "len": 32,
+        "load": "F3 _ C4 Ab4 _ F4 _ Eb4 C4 _ Ab3 _ F3 _ _ _ F3 _ Db4 Ab4 _ F4 Eb4 _ C4 _ Bb3 Ab3 _ F3 _ _",
+        "gate": 58
+      },
+      {
+        "name": "A minor music box",
+        "len": 32,
+        "load": "A3 C4 E4 _ A4 _ E4 C4 _ B3 E4 _ G4 E4 B3 _ A3 _ C4 E4 _ A4 G4 _ E4 C4 _ B3 D4 _ A3 _",
+        "gate": 46
+      },
+      {
+        "name": "Bb minor broken piano",
+        "len": 32,
+        "load": "Bb3 _ Db4 F4 _ Gb4 F4 _ Db4 _ Bb3 _ Ab3 Gb3 F3 _ Bb3 Db4 _ F4 Ab4 _ Gb4 F4 _ Eb4 Db4 _ Bb3 _ F3 _",
+        "gate": 54
+      },
+      {
+        "name": "C minor toy mechanism",
+        "len": 32,
+        "load": "C4 Eb4 _ G4 _ Bb4 G4 _ Eb4 C4 _ Bb3 _ G3 Eb3 _ C4 _ G4 Eb4 Bb4 _ C5 _ G4 Eb4 _ D4 C4 _ G3 _",
+        "gate": 42
+      },
+      {
+        "name": "Gb childlike circuit",
+        "len": 32,
+        "load": "Gb4 Ab4 Bb4 _ Db5 _ Bb4 Ab4 Gb4 _ Eb4 _ Db4 Bb3 _ Gb3 Gb4 _ Bb4 Db5 _ Eb5 Db5 _ Bb4 Ab4 _ Eb4 Db4 _ Gb3 _",
+        "gate": 48
+      },
+      {
+        "name": "D minor clockwork long",
+        "len": 64,
+        "load": "D4 _ F4 _ A4 _ F4 D4 _ E4 _ G4 A4 _ G4 E4 D4 _ F4 A4 _ C5 A4 F4 D4 _ E4 G4 _ A4 _ G4 D4 F4 _ A4 C5 _ A4 F4 _ E4 G4 _ Bb4 A4 _ G4 F4 _ D4 E4 _ G4 A4 _ C5 _ Bb4 A4 G4 _ D4 _",
+        "gate": 50
+      },
+      {
+        "name": "E major wistful",
+        "len": 32,
+        "load": "E4 _ Gb4 Ab4 _ B4 Ab4 _ Gb4 E4 _ Db4 B3 _ Ab3 E3 E4 Ab4 _ B4 Db5 _ B4 Ab4 _ Gb4 E4 _ B3 _ E4 _",
+        "gate": 55
+      },
+      {
+        "name": "A minor echo pulse",
+        "len": 32,
+        "load": "A4 _ _ E4 A4 _ C5 _ _ E5 _ A4 G4 _ E4 _ A3 _ _ E4 A4 _ C5 B4 _ G4 E4 _ C4 _ A3 _",
+        "gate": 44
+      },
+      {
+        "name": "F minor reverie long",
+        "len": 64,
+        "load": "F3 C4 _ Ab4 _ F4 _ Eb4 Db4 _ C4 _ Bb3 Ab3 _ Gb3 F3 _ C4 Ab3 _ F4 Eb4 _ Db4 C4 _ Ab3 _ Gb3 F3 _ F3 Ab3 C4 _ Eb4 _ Db4 C4 _ Bb3 Ab3 _ Gb3 F3 _ Eb3 F3 _ Ab3 C4 _ Db4 Eb4 _ Gb4 Ab4 _ Gb4 Eb4 Db4 C4 _",
+        "gate": 62
+      },
+      {
+        "name": "C melancholy toy",
+        "len": 32,
+        "load": "C5 _ B4 _ A4 _ G4 _ E4 _ D4 _ C4 _ E4 G4 C5 _ Bb4 _ Ab4 _ G4 _ Eb4 _ D4 _ C4 _ G3 _",
+        "gate": 52
+      },
+      {
+        "name": "Db slow cells",
+        "len": 32,
+        "load": "Db4~ Db4~ Db4 _ _ Ab4~ Ab4~ Ab4 _ _ F4~ F4~ F4 _ _ Eb4~ Eb4~ Eb4 _ _ Db4~ Db4~ Db4 _ _ C4~ C4 _ _ Ab3~ Ab3~ Ab3",
+        "gate": 92
+      },
+      {
+        "name": "G minor clock-like",
+        "len": 32,
+        "load": "G4 F4 Eb4 D4 _ C4 Bb3 _ D4 _ C4 Bb3 G3 _ F3 _ G4 _ D4 Bb3 Eb4 _ C4 _ D4 Bb3 _ A3 G3 _ D3 _",
+        "gate": 41
+      },
+      {
+        "name": "B bright sad",
+        "len": 32,
+        "load": "B3 _ Db4 E4 _ Gb4 Ab4 _ Gb4 E4 _ Db4 B3 _ Ab3 _ B3 E4 _ Gb4 B4 _ Ab4 Gb4 _ E4 Db4 _ B3 _ Gb3 _",
+        "gate": 56
+      },
+      {
+        "name": "A minor digital pulse",
+        "len": 32,
+        "load": "A3 _ A4 _ _ E4 A3 _ C5 _ _ A4 E4 _ C4 _ A3 _ E5 _ A4 _ _ G4 E4 C5 _ B4 _ A4 E4 _",
+        "gate": 36
+      },
+      {
+        "name": "Eb minor autumn machine",
+        "len": 32,
+        "load": "Eb4 _ Gb4 _ Bb4 _ Ab4 Gb4 Eb4 _ Db4 _ Bb3 _ Ab3 Eb3 Eb4 Gb4 _ Bb4 _ Db5 Bb4 _ Ab4 Gb4 _ Db4 Bb3 _ Eb4 _",
+        "gate": 53
+      },
+      {
+        "name": "Gb minor fog circuit",
+        "len": 32,
+        "load": "Gb3 _ _ B3 _ E4 _ Db4 _ A3 _ Gb4 Db5 _ B4 _ Gb3 B3 _ E4 _ Db4 A3 _ E5 _ Db5 B4 _ Gb4 _ _",
+        "gate": 60
+      },
+      {
+        "name": "C minor haunted keys",
+        "len": 32,
+        "load": "C4 Eb4 G4 Bb4 _ Ab4 G4 Eb4 C4 _ Bb3 Ab3 G3 Eb3 C3 _ C4 _ G4 Bb4 C5 _ Ab4 G4 _ Eb4 D4 _ C4 _ G3 _",
+        "gate": 50
+      },
+      {
+        "name": "A pastoral sad",
+        "len": 32,
+        "load": "A4 B4 _ Db5 E5 _ Db5 B4 A4 _ Gb4 E4 _ Db4 A3 _ A4 _ B4 E5 _ Gb5 E5 _ Db5 B4 _ Gb4 E4 _ A3 _",
+        "gate": 57
+      },
+      {
+        "name": "E minor mechanical",
+        "len": 32,
+        "load": "E4 G4 B4 E5 _ B4 G4 E4 _ D4 B3 G3 _ A3 Gb3 E3 E4 _ B4 G4 D5 _ B4 _ G4 E4 _ D4 B3 _ E4 _",
+        "gate": 39
+      },
+      {
+        "name": "D dorian long form",
+        "len": 64,
+        "load": "D4 _ F4 _ A4 _ C5 _ A4 F4 _ D4 _ E4 G4 _ A4 _ C5 _ A4 G4 F4 _ D4 E4 _ G4 A4 _ C5 _ D5 _ C5 A4 _ G4 F4 _ E4 D4 _ A3 C4 _ E4 G4 A4 _ G4 E4 F4 _ D4 _ C4 A3 _ G3 D4 _ _ _",
+        "gate": 54
+      }
     ]
   },
   {
-    id: 'romantica', title: 'Romanticismo Oscuro',
-    seqs: [
-      { name: 'C Lament Bass',            len: 16, load: 'C3 _ B2 _ Bb2 _ A2 _ Ab2 _ G2 _ Gb2 _ F2 E2' },
-      { name: 'D minor Tragic Fall',      len: 16, load: 'D4 C4 B3 Bb3 A3 Ab3 G3 Gb3 F3 E3 Eb3 D3 _ _ _ _' },
-      { name: 'G minor Passacaglia',      len: 16, load: 'G3 _ F3 Eb3 D3 _ C3 Bb2 _ A2 _ Bb2 C3 D3 _ _' },
-      { name: 'A minor Teardrops',        len: 16, load: 'A4 G4 F4 E4 D4 C4 B3 A3 _ B3 C4 D4 E4 _ F4 G4' },
-      { name: 'E minor Dark Chorale',     len: 16, load: 'E3 B3 E4 _ D4 B3 G3 _ C4 G3 E3 _ B2 _ G2 _' },
-      { name: 'F minor Schubert Long',    len: 32, load: 'F3 Ab3 C4 F4 _ Eb4 Db4 _ C4 _ Ab3 Gb3 F3 Eb3 _ Db3 F3 Ab3 C4 _ Eb4 _ Gb4 Ab4 _ Gb4 Eb4 C4 _ Ab3 F3 _' },
-      { name: 'B minor Schumann Descent', len: 16, load: 'B3 A3 Ab3 G3 Gb3 F3 E3 Eb3 D3 Db3 C3 B2 _ _ _ _' },
-      { name: 'C minor Half-Dim',         len: 16, load: 'C4 Eb4 Gb4 Bb4 _ Ab4 Gb4 Eb4 C4 _ B3 _ Ab3 _ G3 _' },
-      { name: 'D minor Requiem',          len: 16, load: 'D3 _ F3 _ A3 _ C4 _ Bb3 _ A3 _ G3 _ F3 D3' },
-      { name: 'G minor Grand Long',       len: 32, load: 'G3 A3 Bb3 C4 D4 Eb4 F4 G4 F4 Eb4 D4 C4 Bb3 A3 G3 _ G3 Bb3 D4 F4 _ Eb4 _ D4 C4 Bb3 A3 G3 _ Gb3 D3 _' },
-      { name: 'Eb minor Dark Romance',    len: 16, load: 'Eb4 _ Db4 Bb3 Ab3 _ Gb3 _ Eb3 _ Db3 Bb2 _ Ab2 Gb2 _' },
-      { name: 'A minor Baroque Grief',    len: 16, load: 'A3 B3 C4 D4 E4 _ F4 E4 D4 C4 B3 _ C4 B3 A3 _' },
-      { name: 'F Tragic Arches',          len: 16, load: 'F4 G4 Ab4 Bb4 C5 _ Db5 C5 Bb4 Ab4 G4 F4 _ Eb4 Db4 C4' },
-      { name: 'Db minor Romantic Long',   len: 32, load: 'Db3 _ E3 _ Ab3 _ B3 _ Db4 _ E4 _ Ab4 _ Gb4 E4 Db4 _ B3 Ab3 _ Gb3 E3 _ Db3 _ B2 _ Ab2 _ Gb2 _' },
-      { name: 'D minor Weeping',          len: 16, load: 'D4 _ Eb4 D4 C4 _ Bb3 _ A3 _ Bb3 C4 D4 Eb4 _ D4' },
-      { name: 'G minor Storm',            len: 16, load: 'G3 Ab3 Bb3 B3 C4 Db4 D4 Eb4 E4 F4 Gb4 G4 _ F4 Eb4 D4' },
-      { name: 'A minor Wanderer',         len: 16, load: 'A3 _ C4 _ E4 _ G4 _ F4 E4 D4 _ C4 B3 _ A3' },
-      { name: 'F minor Tragic Arp',       len: 16, load: 'F3 Ab3 C4 F4 Ab4 C5 F5 _ Eb5 C5 Ab4 Eb4 C4 Ab3 Eb3 _' },
-      { name: 'Bb minor Dark Elegy',      len: 16, load: 'Bb3 _ Ab3 Gb3 F3 _ Eb3 Db3 _ C3 _ Bb2 Ab2 Gb2 _ F2' },
-      { name: 'E minor Grand Long',       len: 32, load: 'E3 _ G3 B3 D4 _ G4 Gb4 E4 D4 B3 _ G3 _ Gb3 E3 E3 G3 B3 D4 _ F4 E4 D4 B3 G3 _ F3 E3 D3 B2 _' }
+    "id": "romantica",
+    "title": "Romanticismo oscuro",
+    "seqs": [
+      {
+        "name": "C minor lament ground",
+        "len": 32,
+        "load": "C3 _ G3 Eb4 C4 _ B3 _ Bb2 _ F3 D4 Bb3 _ A3 _ Ab2 _ Eb3 C4 Ab3 _ G3 _ G2 _ D3 B3 F3 _ Eb3 C3",
+        "gate": 62
+      },
+      {
+        "name": "D minor tragic fall",
+        "len": 32,
+        "load": "D4 _ A4 F4 E4 _ D4 _ C4 _ A3 F3 E3 _ D3 _ A3 _ C4 E4 F4 _ A4 _ G4 F4 E4 _ D4 _ A3 D3",
+        "gate": 58
+      },
+      {
+        "name": "G minor passacaglia",
+        "len": 64,
+        "load": "G2 _ D3 G3 Bb3 _ A3 _ F2 _ C3 F3 A3 _ G3 _ Eb2 _ Bb2 Eb3 G3 _ F3 _ D2 _ A2 D3 Gb3 _ F3 _ G2 D3 _ Bb3 D4 _ C4 Bb3 F2 C3 _ A3 C4 _ Bb3 A3 Eb2 Bb2 _ G3 Bb3 _ A3 G3 D2 A2 _ Gb3 A3 _ G3 _",
+        "gate": 60
+      },
+      {
+        "name": "A minor teardrop arc",
+        "len": 32,
+        "load": "A3 _ E4 C5 B4 _ A4 _ G4 _ E4 C4 B3 _ A3 _ C4 _ E4 A4 G4 _ F4 _ E4 D4 C4 _ B3 _ A3 _",
+        "gate": 64
+      },
+      {
+        "name": "E minor dark chorale",
+        "len": 32,
+        "load": "E3 _ B3 E4 G4 _ Gb4 _ D3 _ A3 D4 F4 _ E4 _ C3 _ G3 C4 E4 _ D4 _ B2 _ Gb3 B3 D4 _ E4 _",
+        "gate": 66
+      },
+      {
+        "name": "F minor long nocturne",
+        "len": 64,
+        "load": "F3 _ C4 Ab4 F4 _ Eb4 _ Db4 _ C4 Bb3 Ab3 _ Gb3 _ F3 Ab3 _ C4 Eb4 _ Db4 C4 Bb3 _ Ab3 Gb3 F3 _ Eb3 _ F3 _ Ab3 C4 F4 _ Eb4 _ Db4 C4 _ Bb3 Ab3 Gb3 _ F3 C4 _ Db4 Eb4 Gb4 _ Ab4 _ Gb4 Eb4 Db4 _ C4 _ F3 _",
+        "gate": 68
+      },
+      {
+        "name": "B minor dark descent",
+        "len": 32,
+        "load": "B3 _ Gb4 D4 Db4 _ B3 _ A3 _ E4 C4 B3 _ A3 _ G3 _ D4 B3 A3 _ G3 _ Gb3 E3 D3 _ Db3 _ B2 _",
+        "gate": 59
+      },
+      {
+        "name": "C minor half-dim tension",
+        "len": 32,
+        "load": "C4 _ Eb4 Gb4 Bb4 _ Ab4 _ Gb4 _ Eb4 C4 B3 _ Bb3 _ C4 _ Gb4 Eb5 D5 _ Bb4 _ Ab4 Gb4 Eb4 _ D4 _ C4 _",
+        "gate": 55
+      },
+      {
+        "name": "D minor requiem line",
+        "len": 32,
+        "load": "D3 _ A3 D4 F4 _ E4 _ C3 _ G3 C4 Eb4 _ D4 _ Bb2 _ F3 Bb3 D4 _ C4 _ A2 _ E3 A3 C4 _ D4 _",
+        "gate": 67
+      },
+      {
+        "name": "G minor grand arc",
+        "len": 64,
+        "load": "G3 A3 Bb3 _ D4 _ F4 G4 A4 _ Bb4 D5 C5 _ Bb4 _ G4 _ D4 Bb3 A3 _ G3 _ Eb3 _ Bb3 G4 F4 _ Eb4 _ D3 _ A3 D4 Gb4 _ A4 _ C5 Bb4 _ A4 G4 _ F4 Eb4 D4 _ Bb3 G3 F3 _ Eb3 _ D3 Gb3 A3 _ G3 _ D3 G2",
+        "gate": 61
+      },
+      {
+        "name": "Eb minor dark romance",
+        "len": 32,
+        "load": "Eb4 _ Bb4 Gb4 F4 _ Eb4 _ Db4 _ Bb3 Gb3 F3 _ Eb3 _ Gb3 _ Bb3 Eb4 Db4 _ C4 _ Bb3 Ab3 Gb3 _ F3 _ Eb3 _",
+        "gate": 63
+      },
+      {
+        "name": "A minor baroque grief",
+        "len": 32,
+        "load": "A3 B3 C4 _ E4 _ D4 C4 B3 _ A3 _ G3 A3 B3 _ C4 D4 E4 _ F4 _ E4 D4 C4 B3 A3 _ E3 _ A3 _",
+        "gate": 52
+      },
+      {
+        "name": "F minor tragic arches",
+        "len": 32,
+        "load": "F4 _ Ab4 C5 Db5 _ C5 _ Bb4 _ Ab4 F4 Eb4 _ Db4 _ C4 _ F4 Ab4 C5 _ Bb4 _ Ab4 Gb4 F4 _ Eb4 _ F4 _",
+        "gate": 60
+      },
+      {
+        "name": "Db minor long romance",
+        "len": 64,
+        "load": "Db3 _ Ab3 E4 Db4 _ B3 _ Ab3 _ Gb3 E3 Db3 _ B2 _ E3 _ Ab3 Db4 E4 _ Gb4 _ Ab4 Gb4 E4 _ Db4 _ B3 _ Db3 _ E3 Ab3 B3 _ Db4 _ E4 _ Ab4 Gb4 E4 _ Db4 _ B3 Ab3 _ Gb3 E3 _ Db3 _ B2 _ Ab2 Gb2 E2 _ Db2 _",
+        "gate": 68
+      },
+      {
+        "name": "D minor weeping turn",
+        "len": 32,
+        "load": "D4 _ Eb4 D4 C4 _ Bb3 _ A3 _ Bb3 C4 D4 _ Eb4 _ F4 _ E4 D4 C4 _ Bb3 _ A3 C4 _ E4 D4 _ A3 _",
+        "gate": 57
+      },
+      {
+        "name": "G minor storm arc",
+        "len": 32,
+        "load": "G3 Bb3 D4 _ F4 _ Ab4 G4 Gb4 _ F4 Eb4 D4 _ C4 _ Bb3 D4 _ G4 A4 _ Bb4 _ F4 Eb4 D4 _ C4 _ G3 _",
+        "gate": 49
+      },
+      {
+        "name": "A minor wanderer",
+        "len": 32,
+        "load": "A3 _ C4 E4 G4 _ F4 _ E4 _ D4 C4 B3 _ A3 _ E4 _ G4 B4 C5 _ B4 _ A4 G4 E4 _ D4 _ A3 _",
+        "gate": 61
+      },
+      {
+        "name": "F minor tragic arpeggio",
+        "len": 32,
+        "load": "F3 Ab3 C4 F4 _ Ab4 C5 _ F5 _ Eb5 C5 Ab4 _ F4 _ Eb4 C4 Ab3 _ Gb3 _ F3 _ C4 Eb4 Gb4 _ F4 _ C4 F3",
+        "gate": 46
+      },
+      {
+        "name": "Bb minor dark elegy",
+        "len": 32,
+        "load": "Bb3 _ F4 Db4 C4 _ Bb3 _ Ab3 _ Eb4 C4 Bb3 _ Ab3 _ Gb3 _ Db4 Bb3 Ab3 _ Gb3 _ F3 Eb3 Db3 _ C3 _ Bb2 _",
+        "gate": 64
+      },
+      {
+        "name": "E minor grand close",
+        "len": 64,
+        "load": "E3 _ B3 G4 E4 _ D4 _ C4 _ B3 A3 G3 _ Gb3 _ E3 G3 _ B3 D4 _ E4 Gb4 G4 _ B4 _ A4 Gb4 E4 _ C4 _ G3 E4 D4 _ C4 _ B3 _ Gb3 D4 E4 _ G4 _ B4 A4 _ G4 Gb4 E4 D4 _ B3 _ G3 Gb3 E3 _ B2 E3",
+        "gate": 65
+      }
     ]
   }
 ];
@@ -15716,7 +17073,7 @@ function renderSeq64() {
     html += '<div class="s64-bib-body" hidden style="padding:0 8px 8px;">';
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">';
     pack.seqs.forEach(function(seq, idx) {
-      var previewNotes = seq.load.split(' ').filter(function(t){ return t !== '_'; }).slice(0, 8).join(' ');
+      var previewNotes = seq.load.split(' ').filter(function(t){ return t !== '_'; }).slice(0, 8).map(function(t){ return t.replace(/[~!?]/g, '').replace(/@d{1,3}$/, ''); }).join(' ');
       html += '<div style="background:rgba(255,176,0,.04);border:1px solid rgba(255,176,0,.1);padding:5px 7px;">';
       html += '<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">';
       html += '<span style="font:700 8px \'IBM Plex Mono\',monospace;color:rgba(255,176,0,.45);white-space:nowrap;">SEQ ' + (idx + 1) + '</span>';
@@ -16670,20 +18027,39 @@ function s64BindEvents() {
 function s64LoadBibSeq(bibSeq, btn) {
   var state = seq64State;
   var seq = state.seqs[state.activeSEQ];
-  var tokens = bibSeq.load.split(' ');
+  var tokens = bibSeq.load.split(/s+/);
   var len = Math.min(bibSeq.len, 64);
+
+  seq.name = bibSeq.name || seq.name;
   seq.length = len;
+  seq.gateLength = Math.max(10, Math.min(100, bibSeq.gate || 50));
+  seq.defaultVelocity = Math.max(1, Math.min(127, bibSeq.velocity || 100));
+  if (bibSeq.swing !== undefined) seq.swing = bibSeq.swing;
+
   for (var i = 0; i < 64; i++) {
-    seq.steps[i] = { active: false, note: 60, velocity: 100, accent: false, ghost: false, tie: false };
+    seq.steps[i] = { active: false, note: 60, velocity: seq.defaultVelocity, accent: false, ghost: false, tie: false };
   }
+
   for (var i = 0; i < tokens.length && i < len; i++) {
-    var tok = tokens[i];
-    if (!tok || tok === '_') continue;
-    var midi = s64NameToMidi(tok);
+    var raw = tokens[i];
+    if (!raw || raw === '_') continue;
+
+    var tie = raw.indexOf('~') >= 0;
+    var accent = raw.indexOf('!') >= 0;
+    var ghost = raw.indexOf('?') >= 0;
+    var velMatch = raw.match(/@(d{1,3})$/);
+    var clean = raw.replace(/[~!?]/g, '').replace(/@d{1,3}$/, '');
+    var midi = s64NameToMidi(clean);
+
     if (midi >= 0 && midi <= 127) {
+      var velocity = velMatch ? parseInt(velMatch[1], 10) : seq.defaultVelocity;
+      velocity = Math.max(1, Math.min(127, velocity));
       seq.steps[i].active = true;
       seq.steps[i].note = midi;
-      seq.steps[i].velocity = 100;
+      seq.steps[i].velocity = velocity;
+      seq.steps[i].accent = accent;
+      seq.steps[i].ghost = ghost;
+      seq.steps[i].tie = tie;
     }
   }
   state.selectedStep = null;
@@ -16780,7 +18156,7 @@ function s64ExportMidi() {
         if (step.tie) {
           for (var ni = idx + 1; ni < seq.length; ni++) {
             var ns = seq.steps[ni];
-            if (ns.active) { chainLen++; if (!ns.tie) break; }
+            if (ns.active && ns.note === step.note) { chainLen++; if (!ns.tie) break; }
             else break;
           }
         }
