@@ -7337,6 +7337,19 @@ body:not(.day-mode) .music-controls .btn.icon:hover
           .r2-step.r2-on.r2-accent { background:#ffcc40; box-shadow:0 0 14px rgba(255,200,0,.8); }
           .r2-step.r2-now { outline:2px solid #fff; outline-offset:-2px; }
           .r2-step.r2-on.r2-now { background:#ffe066; box-shadow:0 0 18px rgba(255,224,0,.9); }
+          .r2-quarter-start { border-left:2px solid rgba(255,176,0,.38) !important; }
+          .r2-quarter-start.r2-on { border-left-color:rgba(255,176,0,.8) !important; }
+          .r2-track-rate {
+            font:700 8px 'IBM Plex Mono',monospace;
+            letter-spacing:.08em;
+            color:rgba(255,176,0,.55);
+            background:rgba(255,176,0,.08);
+            border:1px solid rgba(255,176,0,.2);
+            border-radius:3px;
+            padding:1px 4px;
+            align-self:flex-start;
+            line-height:1.4;
+          }
 
           /* Probability bars */
           .r2-prob {
@@ -8357,13 +8370,16 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             for (var n=0;n<16;n++) nums += '<div class="r2-step-num">'+ String(n+1).padStart(2,'0') +'</div>';
 
             var tracksHtml = '';
+            var rateLabels = {1:'1/4', 2:'1/8', 4:'1/16', 8:'1/32'};
             r2State.tracks.forEach(function(track, ti) {
               var isSel = (ti === r2State.selectedTrack);
+              var tRate = track.rate || 2;
               var stepsHtml = '';
               for (var si=0; si<16; si++) {
                 var cls = 'r2-step';
                 if (track.steps[si]) cls += ' r2-on';
                 if (track.accents[si]) cls += ' r2-accent';
+                if (si % tRate === 0) cls += ' r2-quarter-start';
                 var noteLabel = '';
                 if (R2_MELODIC[track.sound] && track.notes && track.notes[si]) {
                   noteLabel = '<span class="r2-step-note">'+track.notes[si].replace(/\d+/,'')+'</span>';
@@ -8372,12 +8388,14 @@ body:not(.day-mode) .music-controls .btn.icon:hover
               }
               var trkSnd = track.sound || 'kick';
               var soundOpts = r2BuildSoundOptgroups(trkSnd);
+              var rateBadge = rateLabels[tRate] || '1/8';
               tracksHtml += '<div class="r2-track" data-ti="'+ti+'">'+
                 '<div class="r2-track-label'+(isSel?'':' r2-dim')+'" data-sel="'+ti+'">'+
                   '<div class="r2-track-label-row">'+
                     '<select class="r2-sound-sel" data-snd="'+ti+'" style="flex:1;min-width:0;background:none;border:none;color:'+(isSel?'var(--gold)':'rgba(255,176,0,.5)')+';font:700 9px \'IBM Plex Mono\',monospace;text-transform:uppercase;outline:none;cursor:pointer;padding:0;">'+soundOpts+'</select>'+
                     '<button class="r2-opts-btn" data-track-opts="'+ti+'" title="Opciones">···</button>'+
                   '</div>'+
+                  '<span class="r2-track-rate" data-rate-badge="'+ti+'">'+rateBadge+'</span>'+
                 '</div>'+
                 '<div class="r2-steps" data-ti="'+ti+'">'+stepsHtml+'</div>'+
               '</div>';
@@ -8572,12 +8590,27 @@ body:not(.day-mode) .music-controls .btn.icon:hover
             r2State.timers.push(setTimeout(r2AnimVU, 100));
           }
 
+          /* ── Per-track playhead helpers ── */
+          function r2SetDrumTrackPlayhead(trackIndex, stepIndex) {
+            var row = document.querySelector('#r2SeqContainer .r2-steps[data-ti="' + trackIndex + '"]');
+            if (!row) return;
+            row.querySelectorAll('.r2-step').forEach(function(stepEl, index) {
+              stepEl.classList.toggle('r2-now', index === stepIndex);
+            });
+          }
+
+          function r2ClearDrumTrackPlayheads() {
+            document.querySelectorAll('#r2SeqContainer .r2-step').forEach(function(stepEl) {
+              stepEl.classList.remove('r2-now');
+            });
+          }
+
           /* ── Playback ── */
           function r2Stop() {
             r2State.timers.forEach(clearTimeout);
             r2State.timers = [];
             r2State.playing = false;
-            document.querySelectorAll('#r2SeqContainer .r2-step').forEach(function(s){ s.classList.remove('r2-now'); });
+            r2ClearDrumTrackPlayheads();
             document.querySelectorAll('#r2Vu .r2-vu-bar').forEach(function(b){ b.style.transform='scaleY(0.15)'; b.classList.remove('r2-hi'); });
             var btn = document.getElementById('r2PlayBtn');
             if (btn) { btn.textContent = '▶'; btn.classList.remove('r2-active'); }
@@ -8626,10 +8659,6 @@ body:not(.day-mode) .music-controls .btn.icon:hover
               }
             }
 
-            /* Step highlight — drums */
-            document.querySelectorAll('#r2SeqContainer .r2-steps').forEach(function(row) {
-              row.querySelectorAll('.r2-step').forEach(function(s, idx){ s.classList.toggle('r2-now', idx === i); });
-            });
             /* Step highlight — melodías (per-melody, rate-aware step index) */
             document.querySelectorAll('#r2MelContainer .r2-mel-steps').forEach(function(row) {
               var mIdx = parseInt(row.dataset.mi);
@@ -8638,23 +8667,23 @@ body:not(.day-mode) .music-controls .btn.icon:hover
               row.querySelectorAll('.r2-mel-step').forEach(function(s, idx){ s.classList.toggle('r2-now', idx === melStep); });
             });
 
-            /* Fire hits — drums (with per-track rate) */
-            r2State.tracks.forEach(function(track) {
+            /* Fire hits — drums (with per-track rate and per-track playhead) */
+            r2State.tracks.forEach(function(track, trackIndex) {
               var tRate = track.rate || 2;
               var tSubSteps = tRate > 2 ? Math.round(tRate / 2) : 1;
               var tBaseIdx = Math.floor(r2State.step * (tRate / 2)) % 16;
               var tSubDur = Math.max(30, (q / tSubSteps) * 0.65);
               for (var _tk = 0; _tk < tSubSteps; _tk++) {
-                (function(ti, delayMs, durMs) {
+                (function(stepIdx, delayMs, durMs, curTrackIndex) {
                   function fireDrum() {
-                    var fireAt = (track.randPlay && track._rndSet) ? track._rndSet[ti] : track.steps[ti];
+                    var fireAt = (track.randPlay && track._rndSet) ? track._rndSet[stepIdx] : track.steps[stepIdx];
                     if (!fireAt) return;
-                    var prob = track.probs[ti] !== undefined ? track.probs[ti] : 100;
+                    var prob = track.probs[stepIdx] !== undefined ? track.probs[stepIdx] : 100;
                     if (prob < 100 && Math.random() * 100 >= prob) return;
                     var gain = (track.vol !== undefined ? track.vol : 80) / 100;
-                    var isAccent = !!(track.accents && track.accents[ti]);
+                    var isAccent = !!(track.accents && track.accents[stepIdx]);
                     if (R2_MELODIC[track.sound]) {
-                      var note = (track.notes && track.notes[ti]) ? track.notes[ti] : 'C4';
+                      var note = (track.notes && track.notes[stepIdx]) ? track.notes[stepIdx] : 'C4';
                       (function(n, snd, dur, g, accent) {
                         r2State._lastRepeatFn = function() { r2PlayNote(n, snd, 150, g); };
                         if (accent) r2PlayNoteAccented(n, snd, dur, g, r2GetAccentAmt());
@@ -8664,7 +8693,7 @@ body:not(.day-mode) .music-controls .btn.icon:hover
                       (function(slId, tNote, tGain) {
                         r2State._lastRepeatFn = function() { if (window.playSoundLabPreset) window.playSoundLabPreset(slId, {volume:tGain}); };
                         if (window.playSoundLabPreset) window.playSoundLabPreset(slId, {note:tNote, volume:tGain});
-                      })(track.sound.slice(9), (track.notes && track.notes[ti]) || 'C4', gain);
+                      })(track.sound.slice(9), (track.notes && track.notes[stepIdx]) || 'C4', gain);
                     } else {
                       (function(snd, tGain, accent) {
                         r2State._lastRepeatFn = function() { try { playDrumHit(snd, tGain); } catch(e){} };
@@ -8673,9 +8702,13 @@ body:not(.day-mode) .music-controls .btn.icon:hover
                       })(track.sound, gain, isAccent);
                     }
                   }
-                  if (delayMs > 0) r2State.timers.push(setTimeout(fireDrum, delayMs));
-                  else fireDrum();
-                })((tBaseIdx + _tk) % 16, _tk > 0 ? Math.round(_tk * q / tSubSteps) : 0, tSubDur);
+                  function runSubStep() {
+                    r2SetDrumTrackPlayhead(curTrackIndex, stepIdx);
+                    fireDrum();
+                  }
+                  if (delayMs > 0) r2State.timers.push(setTimeout(runSubStep, delayMs));
+                  else runSubStep();
+                })((tBaseIdx + _tk) % 16, _tk > 0 ? Math.round(_tk * q / tSubSteps) : 0, tSubDur, trackIndex);
               }
             });
 
@@ -10470,6 +10503,8 @@ body:not(.day-mode) .music-controls .btn.icon:hover
                   x.style.borderColor = on ? 'var(--gold)' : '';
                   x.style.color = on ? 'var(--gold)' : '';
                 });
+                var badge = document.querySelector('[data-rate-badge="'+ti+'"]');
+                if (badge) badge.textContent = rateLabels[track.rate] || '1/8';
               });
             });
             p.querySelector('#r2tRnd'+ti).addEventListener('click', function(e) {
